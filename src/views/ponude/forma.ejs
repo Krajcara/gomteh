@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<h1>Nova ponuda — <%= posao.naziv %></h1>
+
+<form class="card" method="post" action="/poslovi/<%= posao.id %>/ponude">
+  <label>Primio (mesto)</label>
+  <input type="text" name="primioMesto">
+
+  <label>Naslov posla</label>
+  <input type="text" name="naslovPosla" placeholder="npr. Adaptacija metalne konstrukcije...">
+
+  <label>Propratni tekst</label>
+  <textarea name="propratniTekst" rows="3"></textarea>
+
+  <label>Tehnički opis</label>
+  <textarea name="tehnickiOpis" rows="3"></textarea>
+
+  <label>Rok isporuke</label>
+  <input type="text" name="rokIsporuke" placeholder="npr. 30 dana od dana uvođenja u posao">
+
+  <label>Plaćanje</label>
+  <input type="text" name="placanje" placeholder="npr. 60% avans ili po dogovoru">
+
+  <label>Garancija</label>
+  <input type="text" name="garancija" placeholder="npr. 2 godine na izvedene radove">
+
+  <label>Napomena</label>
+  <input type="text" name="napomena" placeholder="npr. Cene su bez PDV-a 20%">
+
+  <label>Rok važenja ponude</label>
+  <input type="text" name="rokVazenja" placeholder="npr. 20 dana">
+
+  <button type="submit">Kreiraj ponudu</button>
+</form>
+
+<%- include('../partials/footer') %>

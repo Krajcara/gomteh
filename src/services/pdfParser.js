@@ -1,11 +1,13 @@
 // Ekstrakcija podataka iz AJAN CNC "Total Job List" PDF-a.
-// Format je fiksan (isti software generiše svaki fajl), pa se koristi
-// parsiranje po poznatim labelama umesto opšteg NLP/heurističkog pristupa.
+// VAŽNA NAPOMENA: ovaj PDF format ne sadrži eksplicitne razmake u tekstualnom sloju
+// (reči se "slepe"), zato se koristi prilagođena render funkcija koja rekonstruiše
+// razmake na osnovu x/y pozicija teksta pre nego što se primene regex šabloni.
 
 const pdf = require('pdf-parse');
 const fs = require('fs');
 
-// Rečnik prevoda fiksnih labela (englesko polje -> srpski prikaz)
+// Rečnik prevoda fiksnih labela (englesko polje -> srpski prikaz), koristi se
+// pri generisanju prevedenog dokumenta (services/pdfGenerator.js)
 const PREVODI_LABELA = {
   'Total Number Of Used Sheets': 'Ukupno iskorišćenih tabli',
   'Total Part Cutting Time': 'Ukupno vreme sečenja delova',
@@ -35,9 +37,36 @@ const PREVODI_LABELA = {
   'Part Perimeter (mm)': 'Obim dela (mm)',
 };
 
+// Rekonstruiše razmake i prelome linija na osnovu pozicija teksta u PDF-u
+// (pdf-parse/pdfjs po default-u ne dodaje razmak kad PDF ne sadrži eksplicitan space glif).
+function customPageRender(pageData) {
+  return pageData.getTextContent().then((textContent) => {
+    let lastY = null;
+    let lastEndX = null;
+    let text = '';
+
+    for (const item of textContent.items) {
+      const x = item.transform[4];
+      const y = item.transform[5];
+
+      if (lastY !== null && Math.abs(y - lastY) > 2) {
+        text += '\n';
+        lastEndX = null;
+      }
+      if (lastEndX !== null && x - lastEndX > 1.2) {
+        text += ' ';
+      }
+      text += item.str;
+      lastEndX = x + item.width;
+      lastY = y;
+    }
+    return text;
+  });
+}
+
 async function parsirajPlanSecenja(putanjaDoFajla) {
   const buffer = fs.readFileSync(putanjaDoFajla);
-  const podaci = await pdf(buffer);
+  const podaci = await pdf(buffer, { pagerender: customPageRender });
   const tekst = podaci.text;
 
   const izvuci = (regex) => {
@@ -46,21 +75,19 @@ async function parsirajPlanSecenja(putanjaDoFajla) {
   };
 
   const tezinaDelova = parseFloat(
-    izvuci(/Total Parts Weight \(Kg\)\s*=?\s*([\d.]+)/i)
+    izvuci(/Total Parts Weight\s*\(Kg\)\s*=\s*([\d.]+)/i)
   );
   const duzinaReza = parseFloat(
-    izvuci(/Total Cutting Path Length \(mm\)\s*=?\s*([\d.]+)/i)
+    izvuci(/Cutting Path Length\s*\(mm\)\s*=\s*([\d.]+)/i)
   );
   const debljina = parseFloat(izvuci(/Thickness\s*\(mm\)\s*([\d.]+)/i));
   const materijal = izvuci(/Material\s+(\S+)/i);
-  const nazivFajla = izvuci(/File Name\s+(\S+\.\w+)/i);
 
-  // NAPOMENA: "Customer Name" iz originalnog PDF-a se NE koristi.
-  // Pri generisanju prevedenog dokumenta, ovo polje se popunjava nazivom
-  // komitenta pod kojim je otvoren posao u aplikaciji (vidi pdfGenerator.js).
+  // Naziv fajla — sve do sledeće poznate labele (Sheet Size) ili kraja linije
+  const nazivFajla = izvuci(/File Name\s+(.+?)(?:\s+Sheet Size|\n)/i);
 
-  // Lista delova: red oblika "1  1001  951X311  1.949  0:01:45  2  3311.09"
-  const deloviRegex = /(\d+)\s+.*?\s+(\d{3,4})\s+(\d+X\d+)\s+([\d.]+)\s+[\d:]+\s+(\d+)\s+([\d.]+)/g;
+  // Lista delova: red oblika "1 1001 951X311 1.949 0:01:45 2 3311.09"
+  const deloviRegex = /^(\d+)\s+(\d{3,5})\s+(\d+X\d+)\s+([\d.]+)\s+\d+:\d{2}:\d{2}\s+(\d+)\s+([\d.]+)\s*$/gm;
   const delovi = [];
   let m;
   while ((m = deloviRegex.exec(tekst)) !== null) {

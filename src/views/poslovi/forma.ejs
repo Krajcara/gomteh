@@ -1,0 +1,8 @@
+<%- include('../partials/header') %>
+<h1>Novi posao — <%= komitent.naziv %></h1>
+<form class="card" method="post" action="/komitenti/<%= komitent.id %>/poslovi">
+  <label>Naziv posla</label>
+  <input type="text" name="naziv" value="<%= predlogNaziva %>">
+  <button type="submit">Otvori posao</button>
+</form>
+<%- include('../partials/footer') %>

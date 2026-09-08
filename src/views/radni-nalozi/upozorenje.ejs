@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<h1>Radni nalog br. <%= nalog.broj %> kreiran — uz upozorenje</h1>
+
+<div class="card" style="border-color:#d97706;">
+  <p class="greska">Prekoračena je planirana količina za sledeće delove:</p>
+  <ul>
+    <% upozorenja.forEach(u => { %>
+      <li><%= u.partName %> — višak <%= u.visak %> kom.</li>
+    <% }) %>
+  </ul>
+  <p>Automatski je otvorena dodatna ponuda <strong><%= dodatnaPonuda.broj %></strong> za taj višak.
+     Pošto sistem ne zna tačnu jediničnu težinu dela, potrebno je ručno uneti iznos stavke u ponudi
+     (metod 1 — težina × cena/kg + rad).</p>
+  <a class="btn" href="/ponude/<%= dodatnaPonuda.id %>">Otvori dodatnu ponudu</a>
+</div>
+
+<a class="btn" href="/radni-nalozi/<%= nalog.id %>">Otvori kreirani radni nalog</a>
+
+<%- include('../partials/footer') %>

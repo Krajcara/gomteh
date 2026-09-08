@@ -1,0 +1,90 @@
+<%- include('../partials/header') %>
+
+<h1>Ponuda br. <%= ponuda.broj %></h1>
+<p>
+  <strong>Posao:</strong> <a href="/poslovi/<%= posao.id %>"><%= posao.naziv %></a> ·
+  <strong>Komitent:</strong> <a href="/komitenti/<%= komitent.id %>"><%= komitent.naziv %></a>
+</p>
+<p><strong>Status:</strong> <%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[ponuda.status] %>
+  <% if (ponuda.je_automatska_za_visak) { %> <em>(automatski generisana za višak količine)</em><% } %>
+</p>
+
+<% if (ponuda.status === 'poslata') { %>
+<div class="card">
+  <form method="post" action="/ponude/<%= ponuda.id %>/prihvati" style="display:inline-block; margin-right:10px;">
+    <button type="submit">Prihvati ponudu</button>
+  </form>
+  <form method="post" action="/ponude/<%= ponuda.id %>/odbij" style="display:inline-block;">
+    <input type="text" name="komentar" placeholder="Komentar odbijanja" style="width:250px; display:inline-block;">
+    <button type="submit" style="background:#a32d2d;">Odbij ponudu</button>
+  </form>
+</div>
+<% } %>
+<% if (ponuda.status === 'odbijena') { %>
+  <p class="greska">Odbijena — <%= ponuda.komentar_odbijanja || 'bez komentara' %></p>
+<% } %>
+
+<div class="card">
+  <h2 style="font-size:16px;">Plan sečenja (opciono)</h2>
+  <form method="post" action="/ponude/<%= ponuda.id %>/plan-secenja" enctype="multipart/form-data">
+    <label>Upload AJAN plana sečenja (PDF)</label>
+    <input type="file" name="plan" accept=".pdf" required>
+    <button type="submit">Obradi plan</button>
+  </form>
+
+  <% planovi.forEach(p => { %>
+    <div style="border-top:1px solid #ddd; margin-top:14px; padding-top:10px;">
+      <p><strong><%= p.naziv_fajla %></strong> — <%= p.materijal %>, debljina <%= p.debljina_mm %>mm</p>
+      <p>Težina delova: <%= p.tezina_delova_kg %> kg · Dužina reza: <%= p.duzina_reza_mm %> mm</p>
+      <p>
+        Metod 1 (težina): <strong><%= p.metod_1_iznos ? p.metod_1_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
+        &nbsp;·&nbsp;
+        Metod 2 (dužina reza): <strong><%= p.metod_2_iznos ? p.metod_2_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
+      </p>
+      <% if (p.izabrani_metod) { %>
+        <p><em>Izabran metod <%= p.izabrani_metod %> — dodat kao stavka.</em></p>
+      <% } else { %>
+        <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
+          <button type="submit" name="metod" value="1">Koristi metod 1</button>
+        </form>
+        <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
+          <button type="submit" name="metod" value="2" <%= !p.metod_2_iznos ? 'disabled' : '' %>>Koristi metod 2</button>
+        </form>
+      <% } %>
+      <a href="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/preuzmi">Preuzmi prevedeni plan (PDF)</a>
+    </div>
+  <% }) %>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Stavke cene</h2>
+  <table>
+    <thead><tr><th>Opis</th><th>Iznos</th><th></th></tr></thead>
+    <tbody>
+      <% stavke.forEach(s => { %>
+        <tr>
+          <td><%= s.opis %></td>
+          <td><%= s.iznos.toLocaleString('sr-RS') %> din</td>
+          <td>
+            <form method="post" action="/ponude/<%= ponuda.id %>/stavke/<%= s.id %>/obrisi" style="margin:0;">
+              <button type="submit" style="background:#a32d2d; margin:0;">Obriši</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <p><strong>Ukupno: <%= (ponuda.ukupno || 0).toLocaleString('sr-RS') %> din</strong></p>
+
+  <form method="post" action="/ponude/<%= ponuda.id %>/stavke">
+    <label>Opis stavke</label>
+    <input type="text" name="opis" required>
+    <label>Iznos (RSD)</label>
+    <input type="number" step="0.01" name="iznos" required>
+    <button type="submit">Dodaj stavku</button>
+  </form>
+</div>
+
+<a class="btn" href="/ponude/<%= ponuda.id %>/pdf">Preuzmi PDF ponude</a>
+
+<%- include('../partials/footer') %>

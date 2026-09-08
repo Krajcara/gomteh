@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+
+<h1><%= posao.naziv %></h1>
+<p><strong>Komitent:</strong> <a href="/komitenti/<%= komitent.id %>"><%= komitent.naziv %></a></p>
+
+<div class="card">
+  <p><strong>Status posla:</strong>
+    <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[posao.status] %>
+  </p>
+  <form method="post" action="/poslovi/<%= posao.id %>/status" style="display:inline;">
+    <select name="status" onchange="this.form.submit()">
+      <option value="poslata_ponuda" <%= posao.status==='poslata_ponuda'?'selected':'' %>>Poslata ponuda</option>
+      <option value="u_izradi" <%= posao.status==='u_izradi'?'selected':'' %>>U izradi</option>
+      <option value="zavrsen" <%= posao.status==='zavrsen'?'selected':'' %>>Završen</option>
+      <option value="odbijen" <%= posao.status==='odbijen'?'selected':'' %>>Odbijen</option>
+    </select>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Ponude</h2>
+  <a class="btn" href="/poslovi/<%= posao.id %>/ponude/nova">+ Nova ponuda</a>
+  <table>
+    <thead><tr><th>Broj</th><th>Naslov</th><th>Status</th><th>Ukupno</th></tr></thead>
+    <tbody>
+      <% ponude.forEach(p => { %>
+        <tr onclick="location.href='/ponude/<%= p.id %>'" style="cursor:pointer;">
+          <td><%= p.broj %></td>
+          <td><%= p.naslov_posla || '' %></td>
+          <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></td>
+          <td><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
+        </tr>
+      <% }) %>
+      <% if (!ponude.length) { %><tr><td colspan="4">Nema ponuda.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Radni nalozi</h2>
+  <a class="btn" href="/poslovi/<%= posao.id %>/radni-nalozi/novi">+ Novi radni nalog</a>
+  <table>
+    <thead><tr><th>Broj</th><th>Status</th><th>Datum</th></tr></thead>
+    <tbody>
+      <% radniNalozi.forEach(n => { %>
+        <tr onclick="location.href='/radni-nalozi/<%= n.id %>'" style="cursor:pointer;">
+          <td><%= n.broj %></td>
+          <td><%= { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[n.status] %></td>
+          <td><%= new Date(n.datum).toLocaleDateString('sr-RS') %></td>
+        </tr>
+      <% }) %>
+      <% if (!radniNalozi.length) { %><tr><td colspan="3">Nema radnih naloga.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

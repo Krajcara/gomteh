@@ -24,9 +24,9 @@ app.use(
 app.use('/', require('./routes/auth'));
 app.use('/komitenti', require('./routes/komitenti'));
 app.use('/podesavanja', require('./routes/podesavanja'));
-// app.use('/poslovi', require('./routes/poslovi'));
-// app.use('/ponude', require('./routes/ponude'));
-// app.use('/radni-nalozi', require('./routes/radniNalozi'));
+app.use('/', require('./routes/poslovi'));
+app.use('/', require('./routes/ponude'));
+app.use('/', require('./routes/radniNalozi'));
 // app.use('/portal', require('./routes/portal'));
 
 app.get('/', (req, res) => res.redirect('/komitenti'));

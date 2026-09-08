@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+<h1>Pretraga ponuda</h1>
+
+<form class="card" method="get" action="/ponude/pretraga">
+  <label>Komitent</label>
+  <select name="komitentId">
+    <option value="">— svi —</option>
+    <% komitenti.forEach(k => { %>
+      <option value="<%= k.id %>" <%= filter.komitentId == k.id ? 'selected' : '' %>><%= k.naziv %></option>
+    <% }) %>
+  </select>
+  <label>Datum od</label>
+  <input type="date" name="datumOd" value="<%= filter.datumOd || '' %>">
+  <label>Datum do</label>
+  <input type="date" name="datumDo" value="<%= filter.datumDo || '' %>">
+  <label>Broj ponude</label>
+  <input type="text" name="broj" placeholder="npr. 09/2026" value="<%= filter.broj || '' %>">
+  <button type="submit">Pretraži</button>
+</form>
+
+<table>
+  <thead><tr><th>Broj</th><th>Komitent</th><th>Posao</th><th>Datum</th><th>Status</th><th>Ukupno</th></tr></thead>
+  <tbody>
+    <% rezultati.forEach(r => { %>
+      <tr onclick="location.href='/ponude/<%= r.id %>'" style="cursor:pointer;">
+        <td><%= r.broj %></td>
+        <td><%= r.komitent_naziv %></td>
+        <td><%= r.posao_naziv %></td>
+        <td><%= new Date(r.datum).toLocaleDateString('sr-RS') %></td>
+        <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[r.status] %></td>
+        <td><%= r.ukupno ? r.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
+      </tr>
+    <% }) %>
+    <% if (!rezultati.length) { %><tr><td colspan="6">Nema rezultata — postavi filter iznad.</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/footer') %>

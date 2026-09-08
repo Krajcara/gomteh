@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<h1>Radni nalog br. <%= nalog.broj %></h1>
+<p><strong>Posao:</strong> <a href="/poslovi/<%= posao.id %>"><%= posao.naziv %></a></p>
+
+<div class="card">
+  <p><strong>Status:</strong>
+    <%= { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[nalog.status] %>
+  </p>
+  <form method="post" action="/radni-nalozi/<%= nalog.id %>/status">
+    <select name="status" onchange="this.form.submit()">
+      <option value="otvoren" <%= nalog.status==='otvoren'?'selected':'' %>>Otvoren</option>
+      <option value="u_izradi" <%= nalog.status==='u_izradi'?'selected':'' %>>U izradi</option>
+      <option value="zavrsen" <%= nalog.status==='zavrsen'?'selected':'' %>>Završen</option>
+      <option value="storniran" <%= nalog.status==='storniran'?'selected':'' %>>Storniran</option>
+    </select>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Stavke naloga</h2>
+  <table>
+    <thead><tr><th>Deo</th><th>Dodeljeno</th><th>Realizovano</th><th></th></tr></thead>
+    <tbody>
+      <% stavke.forEach(s => { %>
+        <tr>
+          <td><%= s.part_name %></td>
+          <td><%= s.kolicina_dodeljena %></td>
+          <td><%= s.kolicina_zavrsena %></td>
+          <td>
+            <form method="post" action="/radni-nalozi/<%= nalog.id %>/stavke/<%= s.id %>/realizacija" style="display:flex; gap:6px; margin:0;">
+              <input type="number" name="kolicinaZavrsena" min="0" max="<%= s.kolicina_dodeljena %>" value="<%= s.kolicina_zavrsena %>" style="width:80px;">
+              <button type="submit" style="margin:0;">Ažuriraj</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+<h1>Novi radni nalog — <%= posao.naziv %></h1>
+
+<form class="card" method="post" action="/poslovi/<%= posao.id %>/radni-nalozi">
+  <table>
+    <thead><tr><th>Deo</th><th>Dimenzije</th><th>Plan</th><th>Već dodeljeno</th><th>Preostalo</th><th>Unesi količinu</th></tr></thead>
+    <tbody>
+      <% delovi.forEach(d => { %>
+        <tr>
+          <td><%= d.part_name %><input type="hidden" name="deoIzPlanaId" value="<%= d.id %>"></td>
+          <td><%= d.part_size || '' %></td>
+          <td><%= d.kolicina_plan %></td>
+          <td><%= d.vecDodeljeno %></td>
+          <td><%= d.preostalo %></td>
+          <td><input type="number" name="kolicina" min="0" placeholder="0"></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <p><em>Napomena: ako uneseš više od preostale količine, sistem će te upozoriti i automatski otvoriti dodatnu ponudu za višak.</em></p>
+  <button type="submit">Kreiraj radni nalog</button>
+</form>
+
+<%- include('../partials/footer') %>
