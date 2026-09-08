@@ -8,8 +8,8 @@ Type=simple
 User=krajcara
 WorkingDirectory=/home/krajcara/gomteh
 ExecStart=/usr/bin/npm start
-Restart=on-failure
-RestartSec=5
+Restart=always
+RestartSec=3
 Environment=NODE_ENV=production
 
 [Install]

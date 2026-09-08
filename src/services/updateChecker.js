@@ -55,9 +55,30 @@ function poslednjiRezultat() {
   return poslednjaProvera;
 }
 
+// Pravo ažuriranje: git pull + npm install. Ne restartuje sam proces —
+// to radi ruta koja ga poziva (šalje odgovor, pa zatim izlazi iz procesa),
+// oslanjajući se na systemd (Restart=always) da ga podigne sa novim kodom.
+function pokreniAzuriranje() {
+  const izlaz = [];
+  try {
+    izlaz.push('$ git pull');
+    izlaz.push(execSync('git pull', { cwd: PROJECT_ROOT }).toString());
+
+    izlaz.push('$ npm install');
+    izlaz.push(execSync('npm install', { cwd: PROJECT_ROOT }).toString());
+
+    return { uspeh: true, log: izlaz.join('\n') };
+  } catch (e) {
+    izlaz.push('GREŠKA: ' + e.message);
+    return { uspeh: false, log: izlaz.join('\n') };
+  }
+}
+
 function pokreniPeriodicnuProveru(intervalMs = 6 * 60 * 60 * 1000) {
   proveriAzuriranje().catch(() => {}); // odmah pri startu servera
   setInterval(() => proveriAzuriranje().catch(() => {}), intervalMs);
 }
 
-module.exports = { proveriAzuriranje, poslednjiRezultat, pokreniPeriodicnuProveru, REPO, BRANCH };
+module.exports = {
+  proveriAzuriranje, poslednjiRezultat, pokreniPeriodicnuProveru, pokreniAzuriranje, REPO, BRANCH,
+};

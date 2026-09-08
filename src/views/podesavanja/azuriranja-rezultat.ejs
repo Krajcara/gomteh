@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<h1>Ažuriranje aplikacije</h1>
+
+<div class="card">
+  <% if (uspeh) { %>
+    <p style="color:var(--success); font-weight:600;">Ažuriranje uspešno povučeno. Aplikacija se sada restartuje...</p>
+    <p style="color:var(--text-muted);">
+      Za par sekundi ponovo učitaj stranicu. Ako je aplikacija podešena kao systemd servis, sama će se vratiti gore
+      sa novim kodom. Ako je pokrenuta ručno (<code>npm start</code>), moraćeš je ponovo pokrenuti ručno.
+    </p>
+  <% } else { %>
+    <p class="greska">Ažuriranje nije uspelo. Aplikacija je i dalje na staroj verziji — ništa nije restartovano.</p>
+  <% } %>
+
+  <pre style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; overflow-x:auto; font-size:13px; color:var(--text-muted); white-space:pre-wrap;"><%= log %></pre>
+
+  <a class="btn" href="/podesavanja/azuriranja">Nazad na status ažuriranja</a>
+</div>
+
+<%- include('../partials/footer') %>

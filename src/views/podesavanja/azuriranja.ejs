@@ -14,8 +14,11 @@
     <a class="btn" href="https://github.com/<%= repo %>/compare/<%= rezultat.lokalni %>...<%= grana %>" target="_blank" rel="noopener">
       Pogledaj izmene na GitHub-u
     </a>
-    <p style="margin-top:16px;"><em>Da ažuriraš: na serveru pokreni <code>git pull</code>, pa <code>npm install</code>, pa restartuj aplikaciju
-      (<code>sudo systemctl restart gomteh</code> ako koristiš servis).</em></p>
+
+    <form method="post" action="/podesavanja/azuriranja/pokreni" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;"
+          onsubmit="return confirm('Aplikacija će se povući nova verzija i restartovati. U toku restarta (par sekundi) aplikacija neće biti dostupna. Nastaviti?');">
+      <button type="submit" style="background:var(--success);">Ažuriraj sada</button>
+    </form>
   <% } else { %>
     <p style="color:#2d7a2d; font-weight:600;">Aplikacija je ažurna.</p>
     <p>Trenutna verzija: <code><%= rezultat.lokalni ? rezultat.lokalni.slice(0,7) : '—' %></code></p>

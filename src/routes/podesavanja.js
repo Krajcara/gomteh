@@ -101,4 +101,25 @@ router.post('/azuriranja/proveri', async (req, res) => {
   res.redirect('/podesavanja/azuriranja');
 });
 
+// Pravo pokretanje ažuriranja: git pull + npm install, pa restart procesa
+router.post('/azuriranja/pokreni', (req, res) => {
+  const rezultat = updateChecker.pokreniAzuriranje();
+
+  if (!rezultat.uspeh) {
+    return res.render('podesavanja/azuriranja-rezultat', {
+      uspeh: false,
+      log: rezultat.log,
+    });
+  }
+
+  res.render('podesavanja/azuriranja-rezultat', {
+    uspeh: true,
+    log: rezultat.log,
+  });
+
+  // Odgovor je poslat — sad gasimo proces. Ako aplikacija radi kao systemd
+  // servis sa Restart=always, systemd će je odmah podići nazad sa novim kodom.
+  setTimeout(() => process.exit(0), 800);
+});
+
 module.exports = router;
