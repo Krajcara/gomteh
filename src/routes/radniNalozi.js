@@ -5,6 +5,8 @@ const RadniNalog = require('../models/radniNalog');
 const Ponuda = require('../models/ponuda');
 const Posao = require('../models/posao');
 const db = require('../db/db');
+const { generisiRadniNalogPdf } = require('../services/pdfGenerator');
+const path = require('path');
 const { zahtevajLogin, MOZE_NALOGE } = require('../middleware/auth');
 
 router.use(zahtevajLogin);
@@ -113,6 +115,15 @@ router.post('/radni-nalozi/:id/status', MOZE_NALOGE, (req, res) => {
 router.post('/radni-nalozi/:id/stavke/:stavkaId/realizacija', MOZE_NALOGE, (req, res) => {
   RadniNalog.azurirajRealizovanuKolicinu(req.params.stavkaId, parseInt(req.body.kolicinaZavrsena, 10));
   res.redirect(`/radni-nalozi/${req.params.id}`);
+});
+
+router.get('/radni-nalozi/:id/pdf', async (req, res) => {
+  try {
+    const putanja = await generisiRadniNalogPdf(req.params.id);
+    res.download(putanja, path.basename(putanja));
+  } catch (greska) {
+    res.status(500).render('greska', { poruka: `Greška pri generisanju PDF-a: ${greska.message}` });
+  }
 });
 
 module.exports = router;

@@ -170,4 +170,87 @@ function generisiPonudaPdf(ponudaId) {
   });
 }
 
-module.exports = { generisiPrevedeniPlan, generisiPonudaPdf, OUTPUT_DIR };
+// Radni nalog — za štampu/potpis u pogonu
+function generisiRadniNalogPdf(radniNalogId) {
+  const nalog = db.prepare('SELECT * FROM radni_nalog WHERE id = ?').get(radniNalogId);
+  if (!nalog) throw new Error('Radni nalog nije pronađen.');
+
+  const posao = db.prepare('SELECT * FROM posao WHERE id = ?').get(nalog.posao_id);
+  const komitent = db.prepare('SELECT * FROM komitent WHERE id = ?').get(posao.komitent_id);
+  const firma = db.prepare('SELECT * FROM firma WHERE id = 1').get();
+  const stavke = db.prepare('SELECT * FROM stavka_naloga WHERE radni_nalog_id = ?').all(radniNalogId);
+  const kreirao = nalog.kreirao_korisnik_id
+    ? db.prepare('SELECT ime FROM korisnik WHERE id = ?').get(nalog.kreirao_korisnik_id)
+    : null;
+
+  const statusText = { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[nalog.status];
+
+  const izlazPutanja = path.join(OUTPUT_DIR, `radni-nalog-${nalog.broj.replace('/', '-')}.pdf`);
+  const doc = new PDFDocument({ margin: 40 });
+  const stream = fs.createWriteStream(izlazPutanja);
+  doc.pipe(stream);
+  registrujFontove(doc);
+
+  const imaLogo = ubaciLogoAkoPostoji(doc, 40, 30, 90);
+  const zaglavljeX = imaLogo ? 150 : 40;
+
+  doc.fontSize(10);
+  if (firma) {
+    doc.text(firma.naziv || '', zaglavljeX, 35);
+    doc.text(`${firma.mesto || ''}, ${firma.adresa || ''}`);
+    if (firma.pib) doc.text(`PIB: ${firma.pib}`);
+  }
+
+  doc.moveDown(2);
+  doc.font('Bold').fontSize(16).text(`Radni nalog br. ${nalog.broj}`);
+  doc.font('Regular').fontSize(10);
+  doc.text(`Datum: ${new Date(nalog.datum).toLocaleDateString('sr-RS')}`);
+  doc.text(`Status: ${statusText}`);
+  if (kreirao) doc.text(`Kreirao: ${kreirao.ime}`);
+
+  doc.moveDown();
+  doc.font('Bold').fontSize(11).text('Posao:');
+  doc.font('Regular').fontSize(10).text(posao.naziv);
+
+  doc.moveDown();
+  doc.font('Bold').fontSize(11).text('Komitent:');
+  doc.font('Regular').fontSize(10).text(komitent.naziv);
+  if (komitent.adresa) doc.text(komitent.adresa);
+  if (komitent.mesto) doc.text(komitent.mesto);
+
+  doc.moveDown();
+  doc.font('Bold').fontSize(11).text('Stavke naloga:');
+  doc.font('Regular').fontSize(10);
+  doc.moveDown(0.3);
+
+  const kolX = [40, 280, 380, 480];
+  doc.font('Bold');
+  doc.text('Deo', kolX[0], doc.y, { continued: false });
+  doc.text('Dodeljeno', kolX[1], doc.y - doc.currentLineHeight());
+  doc.text('Realizovano', kolX[2], doc.y - doc.currentLineHeight());
+  doc.font('Regular');
+  doc.moveDown(0.3);
+
+  stavke.forEach((s) => {
+    const y = doc.y;
+    doc.text(s.part_name, kolX[0], y);
+    doc.text(String(s.kolicina_dodeljena), kolX[1], y);
+    doc.text(String(s.kolicina_zavrsena), kolX[2], y);
+    doc.moveDown(0.3);
+  });
+
+  doc.moveDown(2);
+  doc.text('_______________________', 40);
+  doc.text('Potpis radnika', 40);
+  doc.text('_______________________', 320, doc.y - doc.currentLineHeight() * 2);
+  doc.text('Potpis kontrole', 320);
+
+  doc.end();
+
+  return new Promise((resolve, reject) => {
+    stream.on('finish', () => resolve(izlazPutanja));
+    stream.on('error', reject);
+  });
+}
+
+module.exports = { generisiPrevedeniPlan, generisiPonudaPdf, generisiRadniNalogPdf, OUTPUT_DIR };
