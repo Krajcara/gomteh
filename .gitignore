@@ -1,0 +1,10 @@
+# Tajni podaci - NIKAD ne ide u git
+.env
+data/
+
+# Node
+node_modules/
+npm-debug.log
+
+# OS
+.DS_Store
