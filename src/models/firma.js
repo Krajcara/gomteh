@@ -40,7 +40,16 @@ function azurirajLogo(putanjaNovogFajla) {
     fs.unlinkSync(postojeca.logo_putanja);
   }
 
-  db.prepare('UPDATE firma SET logo_putanja = ? WHERE id = 1').run(putanjaNovogFajla);
+  if (postojeca) {
+    db.prepare('UPDATE firma SET logo_putanja = ? WHERE id = 1').run(putanjaNovogFajla);
+  } else {
+    // firma red još ne postoji (podaci firme nikad nisu sačuvani) — napravi ga
+    // sa praznim poljima da upload loga radi nezavisno od redosleda popunjavanja
+    db.prepare(
+      `INSERT INTO firma (id, naziv, logo_putanja) VALUES (1, '', ?)`
+    ).run(putanjaNovogFajla);
+  }
+
   return preuzmi();
 }
 

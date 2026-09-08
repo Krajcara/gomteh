@@ -44,12 +44,17 @@ router.post('/firma', (req, res) => {
 });
 
 // Upload / zamena logoa
-router.post('/firma/logo', upload.single('logo'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).render('greska', { poruka: 'Fajl logoa nije poslat.' });
-  }
-  Firma.azurirajLogo(req.file.path);
-  res.redirect('/podesavanja#logo');
+router.post('/firma/logo', (req, res) => {
+  upload.single('logo')(req, res, (err) => {
+    if (err) {
+      return res.status(400).render('greska', { poruka: `Greška pri uploadu logoa: ${err.message}` });
+    }
+    if (!req.file) {
+      return res.status(400).render('greska', { poruka: 'Fajl logoa nije poslat.' });
+    }
+    Firma.azurirajLogo(req.file.path);
+    res.redirect('/podesavanja#logo');
+  });
 });
 
 // Obračun — cena/kg i procenat rada
