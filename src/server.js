@@ -20,14 +20,30 @@ app.use(
   })
 );
 
+// Obaveštenje o dostupnom ažuriranju — vidljivo samo administratorima
+const updateChecker = require('./services/updateChecker');
+updateChecker.pokreniPeriodicnuProveru();
+
+app.use((req, res, next) => {
+  const rezultat = updateChecker.poslednjiRezultat();
+  res.locals.updateDostupan = Boolean(
+    req.session.korisnik &&
+    req.session.korisnik.uloga === 'administrator' &&
+    rezultat &&
+    rezultat.updateDostupan
+  );
+  next();
+});
+
 // Rute (dodaju se postupno kako se moduli razvijaju)
 app.use('/', require('./routes/auth'));
 app.use('/komitenti', require('./routes/komitenti'));
 app.use('/podesavanja', require('./routes/podesavanja'));
+app.use('/portal', require('./routes/portal')); // MORA pre '/' mountovanih ruta ispod (poslovi/ponude/radniNalozi
+                                                  // globalno presreću sve na '/' svojim zahtevajLogin middleware-om)
 app.use('/', require('./routes/poslovi'));
 app.use('/', require('./routes/ponude'));
 app.use('/', require('./routes/radniNalozi'));
-// app.use('/portal', require('./routes/portal'));
 
 app.get('/', (req, res) => res.redirect('/komitenti'));
 

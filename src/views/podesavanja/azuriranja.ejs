@@ -1,0 +1,33 @@
+<%- include('../partials/header') %>
+<h1>Ažuriranje aplikacije</h1>
+
+<div class="card">
+  <% if (!rezultat) { %>
+    <p>Provera još nije izvršena.</p>
+  <% } else if (rezultat.greska) { %>
+    <p class="greska">Greška pri proveri: <%= rezultat.greska %></p>
+    <p><em>Proveri da server ima pristup internetu (api.github.com).</em></p>
+  <% } else if (rezultat.updateDostupan) { %>
+    <p style="color:#a36b00; font-weight:600;">Dostupna je nova verzija na GitHub-u.</p>
+    <p>Tvoja verzija: <code><%= rezultat.lokalni ? rezultat.lokalni.slice(0,7) : '—' %></code></p>
+    <p>Najnovija verzija: <code><%= rezultat.udaljeni.slice(0,7) %></code></p>
+    <a class="btn" href="https://github.com/<%= repo %>/compare/<%= rezultat.lokalni %>...<%= grana %>" target="_blank" rel="noopener">
+      Pogledaj izmene na GitHub-u
+    </a>
+    <p style="margin-top:16px;"><em>Da ažuriraš: na serveru pokreni <code>git pull</code>, pa <code>npm install</code>, pa restartuj aplikaciju
+      (<code>sudo systemctl restart gomteh</code> ako koristiš servis).</em></p>
+  <% } else { %>
+    <p style="color:#2d7a2d; font-weight:600;">Aplikacija je ažurna.</p>
+    <p>Trenutna verzija: <code><%= rezultat.lokalni ? rezultat.lokalni.slice(0,7) : '—' %></code></p>
+  <% } %>
+
+  <% if (rezultat && rezultat.vreme) { %>
+    <p style="color:#777; font-size:13px;">Poslednja provera: <%= new Date(rezultat.vreme).toLocaleString('sr-RS') %></p>
+  <% } %>
+
+  <form method="post" action="/podesavanja/azuriranja/proveri">
+    <button type="submit">Proveri sada</button>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

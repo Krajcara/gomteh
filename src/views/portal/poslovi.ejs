@@ -1,0 +1,18 @@
+<%- include('../partials/portal-header') %>
+
+<h1>Vaši poslovi</h1>
+
+<table>
+  <thead><tr><th>Naziv posla</th><th>Status</th></tr></thead>
+  <tbody>
+    <% poslovi.forEach(p => { %>
+      <tr onclick="location.href='/portal/poslovi/<%= p.id %>'" style="cursor:pointer;">
+        <td><%= p.naziv %></td>
+        <td><%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[p.status] %></td>
+      </tr>
+    <% }) %>
+    <% if (!poslovi.length) { %><tr><td colspan="2">Trenutno nema poslova.</td></tr><% } %>
+  </tbody>
+</table>
+
+<%- include('../partials/footer') %>

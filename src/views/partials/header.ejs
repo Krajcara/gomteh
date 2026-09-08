@@ -13,6 +13,9 @@
       <a href="/komitenti">Komitenti</a>
       <a href="/ponude/pretraga">Ponude</a>
       <a href="/podesavanja">Podešavanja</a>
+      <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %>
+        <a href="/podesavanja/azuriranja" style="color:#f0b000; font-weight:700;">● Update dostupan</a>
+      <% } %>
     </nav>
   </header>
   <main class="sadrzaj">

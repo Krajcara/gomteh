@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const Firma = require('../models/firma');
 const db = require('../db/db');
+const updateChecker = require('../services/updateChecker');
 const { SAMO_ADMIN } = require('../middleware/auth');
 
 const upload = multer({
@@ -84,6 +85,20 @@ router.post('/cena-po-debljini', (req, res) => {
 router.post('/cena-po-debljini/:id/obrisi', (req, res) => {
   db.prepare('DELETE FROM cena_po_debljini WHERE id = ?').run(req.params.id);
   res.redirect('/podesavanja#cene');
+});
+
+// Ažuriranje aplikacije — status i ručna provera
+router.get('/azuriranja', (req, res) => {
+  res.render('podesavanja/azuriranja', {
+    rezultat: updateChecker.poslednjiRezultat(),
+    repo: updateChecker.REPO,
+    grana: updateChecker.BRANCH,
+  });
+});
+
+router.post('/azuriranja/proveri', async (req, res) => {
+  await updateChecker.proveriAzuriranje();
+  res.redirect('/podesavanja/azuriranja');
 });
 
 module.exports = router;

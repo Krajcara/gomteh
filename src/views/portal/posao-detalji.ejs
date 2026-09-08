@@ -1,0 +1,50 @@
+<%- include('../partials/portal-header') %>
+
+<h1><%= posao.naziv %></h1>
+<p><strong>Status posla:</strong>
+  <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[posao.status] %>
+</p>
+
+<div class="card">
+  <h2 style="font-size:16px;">Ponude</h2>
+  <table>
+    <thead><tr><th>Broj</th><th>Naslov</th><th>Status</th><th>Ukupno</th></tr></thead>
+    <tbody>
+      <% ponude.forEach(p => { %>
+        <tr>
+          <td><%= p.broj %></td>
+          <td><%= p.naslov_posla || '' %></td>
+          <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></td>
+          <td><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
+        </tr>
+      <% }) %>
+      <% if (!ponude.length) { %><tr><td colspan="4">Nema ponuda.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Radni nalozi</h2>
+  <% radniNalozi.forEach(n => { %>
+    <div style="border-top:1px solid #ddd; margin-top:14px; padding-top:10px;">
+      <p><strong>Nalog br. <%= n.broj %></strong> —
+        <%= { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[n.status] %>
+      </p>
+      <table>
+        <thead><tr><th>Deo</th><th>Dodeljeno</th><th>Realizovano</th></tr></thead>
+        <tbody>
+          <% stavkeNaloga[n.id].forEach(s => { %>
+            <tr>
+              <td><%= s.part_name %></td>
+              <td><%= s.kolicina_dodeljena %></td>
+              <td><%= s.kolicina_zavrsena %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% }) %>
+  <% if (!radniNalozi.length) { %><p>Nema radnih naloga.</p><% } %>
+</div>
+
+<%- include('../partials/footer') %>
