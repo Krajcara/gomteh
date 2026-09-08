@@ -23,8 +23,8 @@ function kreiraj({ naziv, tip, adresa, mesto, kontaktOsoba, kontaktTelefon, pib,
   const rezultat = db
     .prepare(
       `INSERT INTO komitent
-        (naziv, tip, adresa, mesto, kontakt_osoba, kontakt_telefon, pib, email, lozinka_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        (naziv, tip, adresa, mesto, kontakt_osoba, kontakt_telefon, pib, email, lozinka_hash, mora_promeniti_lozinku)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
     )
     .run(naziv, tip, adresa, mesto, kontaktOsoba, kontaktTelefon, pib, email, lozinkaHash);
 

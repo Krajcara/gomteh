@@ -1,0 +1,16 @@
+[Unit]
+Description=GOMTEH - aplikacija za ponude i radne naloge
+After=network.target
+
+[Service]
+Type=simple
+# IZMENI User i WorkingDirectory da odgovaraju tvom serveru
+User=krajcara
+WorkingDirectory=/home/krajcara/gomteh
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

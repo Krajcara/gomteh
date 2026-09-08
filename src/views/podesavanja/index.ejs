@@ -2,7 +2,7 @@
 
 <h1>Podešavanja</h1>
 
-<div class="card">
+<div class="card" id="firma">
   <h2 style="font-size:16px;">Podaci firme</h2>
   <form method="post" action="/podesavanja/firma">
     <label>Naziv firme</label>
@@ -27,7 +27,7 @@
   </form>
 </div>
 
-<div class="card">
+<div class="card" id="logo">
   <h2 style="font-size:16px;">Logo firme</h2>
   <% if (firma && firma.logo_putanja) { %>
     <p>Trenutni logo je postavljen.</p>
@@ -41,7 +41,7 @@
   </form>
 </div>
 
-<div class="card">
+<div class="card" id="obracun">
   <h2 style="font-size:16px;">Obračun — materijal i rad</h2>
   <form method="post" action="/podesavanja/obracun">
     <label>Cena materijala po kg (RSD)</label>
@@ -52,7 +52,7 @@
   </form>
 </div>
 
-<div class="card">
+<div class="card" id="cene">
   <h2 style="font-size:16px;">Cena po dužnom metru, po debljini materijala</h2>
   <table>
     <thead><tr><th>Debljina (mm)</th><th>Cena po m (RSD)</th><th></th></tr></thead>

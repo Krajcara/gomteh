@@ -39,7 +39,7 @@ router.get('/', (req, res) => {
 // Podaci firme (bez logoa)
 router.post('/firma', (req, res) => {
   Firma.sacuvaj(req.body);
-  res.redirect('/podesavanja');
+  res.redirect('/podesavanja#firma');
 });
 
 // Upload / zamena logoa
@@ -48,7 +48,7 @@ router.post('/firma/logo', upload.single('logo'), (req, res) => {
     return res.status(400).render('greska', { poruka: 'Fajl logoa nije poslat.' });
   }
   Firma.azurirajLogo(req.file.path);
-  res.redirect('/podesavanja');
+  res.redirect('/podesavanja#logo');
 });
 
 // Obračun — cena/kg i procenat rada
@@ -68,7 +68,7 @@ router.post('/obracun', (req, res) => {
       procenat
     );
   }
-  res.redirect('/podesavanja');
+  res.redirect('/podesavanja#obracun');
 });
 
 // Cena po dužnom metru, po debljini — dodavanje/izmena reda
@@ -78,12 +78,12 @@ router.post('/cena-po-debljini', (req, res) => {
     `INSERT INTO cena_po_debljini (debljina_mm, cena_po_m) VALUES (?, ?)
      ON CONFLICT(debljina_mm) DO UPDATE SET cena_po_m = excluded.cena_po_m`
   ).run(parseFloat(debljinaMm), parseFloat(cenaPoM));
-  res.redirect('/podesavanja');
+  res.redirect('/podesavanja#cene');
 });
 
 router.post('/cena-po-debljini/:id/obrisi', (req, res) => {
   db.prepare('DELETE FROM cena_po_debljini WHERE id = ?').run(req.params.id);
-  res.redirect('/podesavanja');
+  res.redirect('/podesavanja#cene');
 });
 
 module.exports = router;
