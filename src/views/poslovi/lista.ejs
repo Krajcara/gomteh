@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <h1>Poslovi</h1>
+  <a class="btn" href="/poslovi/novi">+ Novi posao</a>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Naziv</th><th>Komitent</th><th>Status</th></tr></thead>
+    <tbody>
+      <% poslovi.forEach(p => { %>
+        <tr onclick="location.href='/poslovi/<%= p.id %>'">
+          <td><%= p.naziv %></td>
+          <td><%= p.komitent_naziv %></td>
+          <td><span class="badge badge-<%= p.status %>">
+            <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[p.status] %>
+          </span></td>
+        </tr>
+      <% }) %>
+      <% if (!poslovi.length) { %><tr><td colspan="3">Nema poslova.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

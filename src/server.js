@@ -32,6 +32,7 @@ app.use((req, res, next) => {
     rezultat &&
     rezultat.updateDostupan
   );
+  res.locals.korisnik = req.session.korisnik || null;
   next();
 });
 

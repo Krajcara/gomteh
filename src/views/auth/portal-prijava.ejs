@@ -1,4 +1,4 @@
-<%- include('../partials/header') %>
+<%- include('../partials/auth-header') %>
 <h1>Prijava</h1>
 <% if (greska) { %><p class="greska"><%= greska %></p><% } %>
 <form class="card" method="post" action="/portal/prijava" style="max-width:360px;">
@@ -8,4 +8,4 @@
   <input type="password" name="lozinka" required>
   <button type="submit">Prijavi se</button>
 </form>
-<%- include('../partials/footer') %>
+<%- include('../partials/auth-footer') %>

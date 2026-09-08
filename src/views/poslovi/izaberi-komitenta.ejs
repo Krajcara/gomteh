@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+
+<div class="page-head"><h1>Novi posao</h1></div>
+
+<div class="card" style="max-width:480px;">
+  <label>Izaberi komitenta</label>
+  <select onchange="if(this.value) location.href='/komitenti/'+this.value+'/poslovi/novi'">
+    <option value="">— izaberi —</option>
+    <% komitenti.forEach(k => { %>
+      <option value="<%= k.id %>"><%= k.naziv %></option>
+    <% }) %>
+  </select>
+  <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">
+    Ako komitent još ne postoji, prvo ga dodaj u
+    <a href="/komitenti/novi">Komitenti → Novi komitent</a>.
+  </p>
+</div>
+
+<%- include('../partials/footer') %>

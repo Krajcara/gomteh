@@ -5,17 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GOMTEH</title>
   <link rel="stylesheet" href="/public/css/style.css">
+  <script>
+    // Primeni sačuvanu temu PRE renderovanja stranice (sprečava "flash" pogrešne teme)
+    (function () {
+      const sacuvana = localStorage.getItem('gomteh-tema');
+      const tema = sacuvana || 'dark';
+      document.documentElement.setAttribute('data-tema', tema);
+    })();
+  </script>
 </head>
 <body>
-  <header class="topbar">
-    <a href="/" class="brand">GOMTEH</a>
-    <nav>
-      <a href="/komitenti">Komitenti</a>
-      <a href="/ponude/pretraga">Ponude</a>
-      <a href="/podesavanja">Podešavanja</a>
-      <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %>
-        <a href="/podesavanja/azuriranja" style="color:#f0b000; font-weight:700;">● Update dostupan</a>
-      <% } %>
-    </nav>
-  </header>
-  <main class="sadrzaj">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-mark">G</span>
+        <span>GOMTEH</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/komitenti" class="<%= typeof aktivno !== 'undefined' && aktivno === 'komitenti' ? 'active' : '' %>">Komitenti</a>
+        <a href="/poslovi" class="<%= typeof aktivno !== 'undefined' && aktivno === 'poslovi' ? 'active' : '' %>">Poslovi</a>
+        <a href="/ponude/pretraga" class="<%= typeof aktivno !== 'undefined' && aktivno === 'ponude' ? 'active' : '' %>">Ponude</a>
+        <a href="/podesavanja" class="<%= typeof aktivno !== 'undefined' && aktivno === 'podesavanja' ? 'active' : '' %>">
+          Podešavanja
+          <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %><span class="dot-badge"></span><% } %>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <% if (typeof korisnik !== 'undefined' && korisnik) { %>
+          <div class="user-block">
+            <div class="user-name"><%= korisnik.ime %></div>
+            <span class="role-badge role-<%= korisnik.uloga %>"><%= korisnik.uloga.replace('_', ' ') %></span>
+          </div>
+        <% } %>
+        <form method="post" action="/odjava" style="margin:0;">
+          <button type="submit" class="link-btn">Odjava</button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="main-col">
+      <div class="topbar">
+        <div></div>
+        <button class="theme-toggle" onclick="prebaciTemu()" title="Promeni temu" aria-label="Promeni temu">
+          <span class="icon-sun">☀</span><span class="icon-moon">☾</span>
+        </button>
+      </div>
+      <main class="sadrzaj">

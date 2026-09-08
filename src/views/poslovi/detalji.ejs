@@ -5,7 +5,9 @@
 
 <div class="card">
   <p><strong>Status posla:</strong>
-    <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[posao.status] %>
+    <span class="badge badge-<%= posao.status %>">
+      <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[posao.status] %>
+    </span>
   </p>
   <form method="post" action="/poslovi/<%= posao.id %>/status" style="display:inline;">
     <select name="status" onchange="this.form.submit()">
@@ -27,7 +29,7 @@
         <tr onclick="location.href='/ponude/<%= p.id %>'" style="cursor:pointer;">
           <td><%= p.broj %></td>
           <td><%= p.naslov_posla || '' %></td>
-          <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></td>
+          <td><span class="badge badge-<%= p.status %>"><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></span></td>
           <td><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
         </tr>
       <% }) %>
@@ -45,7 +47,7 @@
       <% radniNalozi.forEach(n => { %>
         <tr onclick="location.href='/radni-nalozi/<%= n.id %>'" style="cursor:pointer;">
           <td><%= n.broj %></td>
-          <td><%= { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[n.status] %></td>
+          <td><span class="badge badge-<%= n.status %>"><%= { otvoren: 'Otvoren', u_izradi: 'U izradi', zavrsen: 'Završen', storniran: 'Storniran' }[n.status] %></span></td>
           <td><%= new Date(n.datum).toLocaleDateString('sr-RS') %></td>
         </tr>
       <% }) %>

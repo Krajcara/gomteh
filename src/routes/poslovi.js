@@ -8,6 +8,23 @@ const { zahtevajLogin, MOZE_PONUDE, MOZE_MENJATI } = require('../middleware/auth
 
 router.use(zahtevajLogin);
 
+// Globalna lista svih poslova (svi komitenti)
+router.get('/poslovi', (req, res) => {
+  const poslovi = db.prepare(`
+    SELECT posao.*, komitent.naziv as komitent_naziv
+    FROM posao
+    JOIN komitent ON komitent.id = posao.komitent_id
+    ORDER BY posao.kreiran_at DESC
+  `).all();
+  res.render('poslovi/lista', { poslovi });
+});
+
+// Biranje komitenta pre otvaranja novog posla
+router.get('/poslovi/novi', MOZE_PONUDE, (req, res) => {
+  const komitenti = Komitent.svi();
+  res.render('poslovi/izaberi-komitenta', { komitenti });
+});
+
 // Forma za novi posao pod komitentom
 router.get('/komitenti/:komitentId/poslovi/novi', MOZE_PONUDE, (req, res) => {
   const komitent = Komitent.poId(req.params.komitentId);

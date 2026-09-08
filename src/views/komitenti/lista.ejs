@@ -1,20 +1,22 @@
 <%- include('../partials/header') %>
 
-<h1>Komitenti</h1>
+<div class="page-head">
+  <h1>Komitenti</h1>
+  <a href="/komitenti/novi" class="btn">+ Novi komitent</a>
+</div>
 
 <form method="get" action="/komitenti" style="margin-bottom:16px;">
-  <input type="text" name="q" placeholder="Pretraga po nazivu ili emailu..." value="<%= q %>">
+  <input type="text" name="q" placeholder="Pretraga po nazivu ili emailu..." value="<%= q %>" style="max-width:320px;">
 </form>
 
-<a href="/komitenti/novi" class="btn">+ Novi komitent</a>
-
+<div class="card" style="padding:0;">
 <table>
   <thead>
     <tr><th>Naziv</th><th>Tip</th><th>Mesto</th><th>Kontakt telefon</th><th>Email</th></tr>
   </thead>
   <tbody>
     <% komitenti.forEach(k => { %>
-      <tr onclick="location.href='/komitenti/<%= k.id %>'" style="cursor:pointer;">
+      <tr onclick="location.href='/komitenti/<%= k.id %>'">
         <td><%= k.naziv %></td>
         <td><%= k.tip === 'firma' ? 'Firma' : 'Fizičko lice' %></td>
         <td><%= k.mesto || '' %></td>
@@ -27,5 +29,6 @@
     <% } %>
   </tbody>
 </table>
+</div>
 
 <%- include('../partials/footer') %>
