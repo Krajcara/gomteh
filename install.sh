@@ -7,11 +7,42 @@ set -e
 
 echo "=== GOMTEH instalacija ==="
 
+if [ "$EUID" -eq 0 ]; then
+  echo "GREŠKA: Ne pokreći ovu skriptu sa 'sudo'."
+  echo "Skripta sama poziva sudo interno, samo za instalaciju Node.js-a na sistem."
+  echo "Ako je pokreneš celu kao root, baza i .env fajl će pripadati root korisniku,"
+  echo "što pravi probleme kasnije kad budeš pokretao 'npm start' kao obično korisnik."
+  echo ""
+  echo "Pokreni je ovako: bash install.sh"
+  exit 1
+fi
+
+
 if [ -f .env ]; then
   echo "Fajl .env već postoji — instalacija je verovatno već urađena."
   echo "Ako želiš da ponoviš instalaciju, obriši .env i data/gomteh.db ručno."
   exit 1
 fi
+
+# Proveri da li Node.js/npm postoje, instaliraj ako ne postoje (samo Debian/Ubuntu)
+if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
+  echo "Node.js nije pronađen na sistemu."
+  if command -v apt-get &> /dev/null; then
+    echo "Instaliram Node.js 20 (LTS) preko NodeSource repozitorijuma..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+
+    echo "Instaliram alate za kompajliranje (potrebni ako neki npm paket nema gotovu binarnu verziju)..."
+    sudo apt-get install -y build-essential python3
+  else
+    echo "Automatska instalacija Node.js-a je podržana samo na Debian/Ubuntu (apt)."
+    echo "Instaliraj Node.js 20+ ručno (https://nodejs.org) pa ponovo pokreni ovu skriptu."
+    exit 1
+  fi
+fi
+
+echo "Node.js verzija: $(node -v), npm verzija: $(npm -v)"
+echo ""
 
 echo "Instaliram zavisnosti..."
 npm install
