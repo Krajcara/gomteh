@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+
+<div class="page-head">
+  <h1>Korisnici</h1>
+  <a href="/korisnici/novi" class="btn">+ Novi korisnik</a>
+</div>
+
+<div class="card" style="padding:0;">
+<table>
+  <thead><tr><th>Ime</th><th>Email</th><th>Uloga</th><th>Status</th></tr></thead>
+  <tbody>
+    <% korisnici.forEach(k => { %>
+      <tr onclick="location.href='/korisnici/<%= k.id %>'">
+        <td><%= k.ime %></td>
+        <td><%= k.email %></td>
+        <td><span class="role-badge role-<%= k.uloga %>"><%= k.uloga.replace('_',' ') %></span></td>
+        <td><span class="badge <%= k.aktivan ? 'badge-zavrsen' : 'badge-odbijen' %>"><%= k.aktivan ? 'Aktivan' : 'Deaktiviran' %></span></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,29 @@
+<%- include('../partials/header') %>
+<h1>Novi korisnik</h1>
+
+<% if (greska) { %><p class="greska"><%= greska %></p><% } %>
+
+<form class="card" method="post" action="/korisnici/novi" style="max-width:420px;">
+  <label>Ime i prezime</label>
+  <input type="text" name="ime" required>
+
+  <label>Email (korisničko ime za prijavu)</label>
+  <input type="email" name="email" required>
+
+  <label>Uloga</label>
+  <select name="uloga" required>
+    <option value="referent_ponude">Referent za ponude</option>
+    <option value="referent_proizvodnja">Referent za proizvodnju</option>
+    <option value="pregled">Samo pregled</option>
+    <option value="administrator">Administrator</option>
+  </select>
+
+  <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">
+    Sistem će generisati početnu lozinku koju ćeš videti samo jednom nakon čuvanja.
+    Korisnik će je promeniti pri prvom logovanju.
+  </p>
+
+  <button type="submit">Kreiraj korisnika</button>
+</form>
+
+<%- include('../partials/footer') %>

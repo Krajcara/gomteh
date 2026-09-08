@@ -15,6 +15,17 @@ const { zahtevajLogin, MOZE_PONUDE } = require('../middleware/auth');
 const UPLOAD_DIR = path.join(__dirname, '../../data/uploads/planovi');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
+const ODBIJANJE_DIR = path.join(__dirname, '../../data/uploads/odbijanja');
+fs.mkdirSync(ODBIJANJE_DIR, { recursive: true });
+
+const uploadOdbijanje = multer({
+  storage: multer.diskStorage({
+    destination: ODBIJANJE_DIR,
+    filename: (req, file, cb) => cb(null, `odbijanje-${Date.now()}-${file.originalname}`),
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: UPLOAD_DIR,
@@ -139,8 +150,11 @@ router.post('/ponude/:id/prihvati', MOZE_PONUDE, (req, res) => {
   res.redirect(`/ponude/${req.params.id}`);
 });
 
-router.post('/ponude/:id/odbij', MOZE_PONUDE, (req, res) => {
-  Ponuda.promeniStatus(req.params.id, 'odbijena', { komentar: req.body.komentar });
+router.post('/ponude/:id/odbij', MOZE_PONUDE, uploadOdbijanje.single('dokument'), (req, res) => {
+  Ponuda.promeniStatus(req.params.id, 'odbijena', {
+    komentar: req.body.komentar,
+    dokumentPutanja: req.file ? req.file.path : null,
+  });
   res.redirect(`/ponude/${req.params.id}`);
 });
 
@@ -152,6 +166,14 @@ router.get('/ponude/:id/pdf', async (req, res) => {
   } catch (greska) {
     res.status(500).render('greska', { poruka: `Greška pri generisanju PDF-a: ${greska.message}` });
   }
+});
+
+router.get('/ponude/:id/dokument-odbijanja', (req, res) => {
+  const ponuda = Ponuda.poId(req.params.id);
+  if (!ponuda || !ponuda.dokument_odbijanja_putanja) {
+    return res.status(404).render('greska', { poruka: 'Dokument nije pronađen.' });
+  }
+  res.download(ponuda.dokument_odbijanja_putanja);
 });
 
 module.exports = router;

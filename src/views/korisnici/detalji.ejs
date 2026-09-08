@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<h1><%= korisnik.ime %></h1>
+<p><%= korisnik.email %></p>
+
+<div class="card" style="max-width:460px;">
+  <label>Uloga</label>
+  <form method="post" action="/korisnici/<%= korisnik.id %>/uloga">
+    <select name="uloga" onchange="this.form.submit()">
+      <option value="referent_ponude" <%= korisnik.uloga==='referent_ponude'?'selected':'' %>>Referent za ponude</option>
+      <option value="referent_proizvodnja" <%= korisnik.uloga==='referent_proizvodnja'?'selected':'' %>>Referent za proizvodnju</option>
+      <option value="pregled" <%= korisnik.uloga==='pregled'?'selected':'' %>>Samo pregled</option>
+      <option value="administrator" <%= korisnik.uloga==='administrator'?'selected':'' %>>Administrator</option>
+    </select>
+  </form>
+
+  <label>Status naloga</label>
+  <p><span class="badge <%= korisnik.aktivan ? 'badge-zavrsen' : 'badge-odbijen' %>"><%= korisnik.aktivan ? 'Aktivan' : 'Deaktiviran' %></span></p>
+  <% if (!jaSam) { %>
+    <form method="post" action="/korisnici/<%= korisnik.id %>/aktivnost">
+      <input type="hidden" name="aktivan" value="<%= korisnik.aktivan ? '0' : '1' %>">
+      <button type="submit" style="<%= korisnik.aktivan ? 'background:var(--danger);' : '' %>">
+        <%= korisnik.aktivan ? 'Deaktiviraj nalog' : 'Aktiviraj nalog' %>
+      </button>
+    </form>
+  <% } else { %>
+    <p style="color:var(--text-muted); font-size:13px;">Ne možeš menjati status sopstvenog naloga.</p>
+  <% } %>
+
+  <form method="post" action="/korisnici/<%= korisnik.id %>/reset-lozinka" style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;"
+        onsubmit="return confirm('Generisati novu lozinku za ovog korisnika?');">
+    <button type="submit">Resetuj lozinku</button>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

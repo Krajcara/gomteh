@@ -14,14 +14,18 @@
   <form method="post" action="/ponude/<%= ponuda.id %>/prihvati" style="display:inline-block; margin-right:10px;">
     <button type="submit">Prihvati ponudu</button>
   </form>
-  <form method="post" action="/ponude/<%= ponuda.id %>/odbij" style="display:inline-block;">
-    <input type="text" name="komentar" placeholder="Komentar odbijanja" style="width:250px; display:inline-block;">
+  <form method="post" action="/ponude/<%= ponuda.id %>/odbij" enctype="multipart/form-data" style="display:inline-block;">
+    <input type="text" name="komentar" placeholder="Komentar odbijanja" style="width:200px; display:inline-block;">
+    <input type="file" name="dokument" style="width:180px; display:inline-block;">
     <button type="submit" style="background:#a32d2d;">Odbij ponudu</button>
   </form>
 </div>
 <% } %>
 <% if (ponuda.status === 'odbijena') { %>
   <p class="greska">Odbijena — <%= ponuda.komentar_odbijanja || 'bez komentara' %></p>
+  <% if (ponuda.dokument_odbijanja_putanja) { %>
+    <p><a href="/ponude/<%= ponuda.id %>/dokument-odbijanja">Preuzmi priloženi dokument</a></p>
+  <% } %>
 <% } %>
 
 <div class="card">

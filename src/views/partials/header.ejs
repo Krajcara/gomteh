@@ -30,6 +30,9 @@
           Podešavanja
           <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %><span class="dot-badge"></span><% } %>
         </a>
+        <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+          <a href="/korisnici" class="<%= typeof aktivno !== 'undefined' && aktivno === 'korisnici' ? 'active' : '' %>">Korisnici</a>
+        <% } %>
       </nav>
 
       <div class="sidebar-footer">
@@ -39,6 +42,7 @@
             <span class="role-badge role-<%= korisnik.uloga %>"><%= korisnik.uloga.replace('_', ' ') %></span>
           </div>
         <% } %>
+        <a href="/promeni-lozinku" class="link-btn" style="display:block; text-decoration:none;">Promeni lozinku</a>
         <form method="post" action="/odjava" style="margin:0;">
           <button type="submit" class="link-btn">Odjava</button>
         </form>

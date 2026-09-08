@@ -1,6 +1,6 @@
 <%- include('../partials/auth-header') %>
 <h1>Promena lozinke</h1>
-<p>Obavezno je da postaviš novu lozinku pri prvom logovanju.</p>
+<p>Ovde možeš postaviti novu lozinku (obavezno je pri prvom logovanju, inače opciono).</p>
 <% if (greska) { %><p class="greska"><%= greska %></p><% } %>
 <form class="card" method="post" action="/promeni-lozinku" style="max-width:360px;">
   <label>Nova lozinka (min. 8 karaktera)</label>
