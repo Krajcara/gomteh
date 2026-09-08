@@ -1,0 +1,12 @@
+<%- include('../partials/header') %>
+<h1>Promena lozinke</h1>
+<p>Obavezno je da postaviš novu lozinku pri prvom logovanju.</p>
+<% if (greska) { %><p class="greska"><%= greska %></p><% } %>
+<form class="card" method="post" action="/portal/promeni-lozinku" style="max-width:360px;">
+  <label>Nova lozinka (min. 8 karaktera)</label>
+  <input type="password" name="novaLozinka" required minlength="8">
+  <label>Potvrda lozinke</label>
+  <input type="password" name="potvrdaLozinke" required minlength="8">
+  <button type="submit">Sačuvaj</button>
+</form>
+<%- include('../partials/footer') %>

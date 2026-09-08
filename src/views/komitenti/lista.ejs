@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+
+<h1>Komitenti</h1>
+
+<form method="get" action="/komitenti" style="margin-bottom:16px;">
+  <input type="text" name="q" placeholder="Pretraga po nazivu ili emailu..." value="<%= q %>">
+</form>
+
+<a href="/komitenti/novi" class="btn">+ Novi komitent</a>
+
+<table>
+  <thead>
+    <tr><th>Naziv</th><th>Tip</th><th>Mesto</th><th>Kontakt telefon</th><th>Email</th></tr>
+  </thead>
+  <tbody>
+    <% komitenti.forEach(k => { %>
+      <tr onclick="location.href='/komitenti/<%= k.id %>'" style="cursor:pointer;">
+        <td><%= k.naziv %></td>
+        <td><%= k.tip === 'firma' ? 'Firma' : 'Fizičko lice' %></td>
+        <td><%= k.mesto || '' %></td>
+        <td><%= k.kontakt_telefon || '' %></td>
+        <td><%= k.email || '' %></td>
+      </tr>
+    <% }) %>
+    <% if (!komitenti.length) { %>
+      <tr><td colspan="5">Nema komitenata.</td></tr>
+    <% } %>
+  </tbody>
+</table>
+
+<%- include('../partials/footer') %>

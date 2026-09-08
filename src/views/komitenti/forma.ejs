@@ -1,0 +1,45 @@
+<%- include('../partials/header') %>
+
+<h1><%= komitent ? 'Izmena komitenta' : 'Novi komitent' %></h1>
+
+<% if (typeof greska !== 'undefined' && greska) { %>
+  <p class="greska"><%= greska %></p>
+<% } %>
+
+<form class="card" method="post" action="<%= komitent ? `/komitenti/${komitent.id}/izmeni` : '/komitenti/novi' %>">
+  <label>Naziv firme ili fizičkog lica *</label>
+  <input type="text" name="naziv" value="<%= komitent ? komitent.naziv : '' %>" required>
+
+  <label>Tip</label>
+  <select name="tip">
+    <option value="firma" <%= komitent && komitent.tip === 'firma' ? 'selected' : '' %>>Firma</option>
+    <option value="fizicko_lice" <%= komitent && komitent.tip === 'fizicko_lice' ? 'selected' : '' %>>Fizičko lice</option>
+  </select>
+
+  <label>Adresa</label>
+  <input type="text" name="adresa" value="<%= komitent ? (komitent.adresa || '') : '' %>">
+
+  <label>Mesto</label>
+  <input type="text" name="mesto" placeholder="npr. 21000 Novi Sad" value="<%= komitent ? (komitent.mesto || '') : '' %>">
+
+  <label>Kontakt osoba (ako je firma)</label>
+  <input type="text" name="kontaktOsoba" value="<%= komitent ? (komitent.kontakt_osoba || '') : '' %>">
+
+  <label>Kontakt telefon</label>
+  <input type="text" name="kontaktTelefon" value="<%= komitent ? (komitent.kontakt_telefon || '') : '' %>">
+
+  <label>PIB (samo za firme)</label>
+  <input type="text" name="pib" value="<%= komitent ? (komitent.pib || '') : '' %>">
+
+  <label>Email (korisničko ime za portal)</label>
+  <input type="email" name="email" value="<%= komitent ? (komitent.email || '') : '' %>">
+
+  <% if (!komitent) { %>
+    <label>Inicijalna lozinka za portal</label>
+    <input type="text" name="inicijalnaLozinka" placeholder="Klijent će je promeniti pri prvom logovanju">
+  <% } %>
+
+  <button type="submit">Sačuvaj</button>
+</form>
+
+<%- include('../partials/footer') %>

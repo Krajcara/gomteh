@@ -1,0 +1,11 @@
+<%- include('../partials/header') %>
+<h1>Prijava</h1>
+<% if (greska) { %><p class="greska"><%= greska %></p><% } %>
+<form class="card" method="post" action="/portal/prijava" style="max-width:360px;">
+  <label>Email</label>
+  <input type="email" name="email" required>
+  <label>Lozinka</label>
+  <input type="password" name="lozinka" required>
+  <button type="submit">Prijavi se</button>
+</form>
+<%- include('../partials/footer') %>

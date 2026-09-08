@@ -1,0 +1,17 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; margin: 0; color: #222; background: #f7f7f5; }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: #1c1c1a; color: #fff; }
+.topbar .brand { color: #fff; font-weight: 700; text-decoration: none; font-size: 18px; }
+.topbar nav a { color: #ddd; text-decoration: none; margin-left: 20px; }
+.topbar nav a:hover { color: #fff; }
+.sadrzaj { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+h1 { font-size: 22px; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #ddd; }
+th { background: #eee; }
+form.card, .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+label { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; }
+input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+button, .btn { margin-top: 16px; padding: 8px 16px; background: #1c1c1a; color: #fff; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+.greska { color: #a32d2d; font-weight: 600; margin-top: 8px; }
+.logo-preview { max-width: 180px; margin: 12px 0; }

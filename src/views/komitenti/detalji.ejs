@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+
+<h1><%= komitent.naziv %></h1>
+
+<div class="card">
+  <p><strong>Tip:</strong> <%= komitent.tip === 'firma' ? 'Firma' : 'Fizičko lice' %></p>
+  <p><strong>Adresa:</strong> <%= komitent.adresa || '—' %></p>
+  <p><strong>Mesto:</strong> <%= komitent.mesto || '—' %></p>
+  <% if (komitent.tip === 'firma') { %>
+    <p><strong>Kontakt osoba:</strong> <%= komitent.kontakt_osoba || '—' %></p>
+    <p><strong>PIB:</strong> <%= komitent.pib || '—' %></p>
+  <% } %>
+  <p><strong>Telefon:</strong> <%= komitent.kontakt_telefon || '—' %></p>
+  <p><strong>Email (portal):</strong> <%= komitent.email || '—' %></p>
+  <a class="btn" href="/komitenti/<%= komitent.id %>/izmeni">Izmeni podatke</a>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Poslovi</h2>
+  <p><em>Modul "poslovi" se dodaje u sledećem koraku razvoja.</em></p>
+</div>
+
+<%- include('../partials/footer') %>

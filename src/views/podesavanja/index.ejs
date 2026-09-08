@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<h1>Podešavanja</h1>
+
+<div class="card">
+  <h2 style="font-size:16px;">Podaci firme</h2>
+  <form method="post" action="/podesavanja/firma">
+    <label>Naziv firme</label>
+    <input type="text" name="naziv" value="<%= firma ? firma.naziv : '' %>">
+    <label>Adresa</label>
+    <input type="text" name="adresa" value="<%= firma ? (firma.adresa || '') : '' %>">
+    <label>Mesto</label>
+    <input type="text" name="mesto" value="<%= firma ? (firma.mesto || '') : '' %>">
+    <label>Email</label>
+    <input type="email" name="email" value="<%= firma ? (firma.email || '') : '' %>">
+    <label>Kontakt telefon</label>
+    <input type="text" name="kontaktTelefon" value="<%= firma ? (firma.kontakt_telefon || '') : '' %>">
+    <label>Matični broj</label>
+    <input type="text" name="maticniBroj" value="<%= firma ? (firma.maticni_broj || '') : '' %>">
+    <label>PIB</label>
+    <input type="text" name="pib" value="<%= firma ? (firma.pib || '') : '' %>">
+    <label>Šifra delatnosti</label>
+    <input type="text" name="sifraDelatnosti" value="<%= firma ? (firma.sifra_delatnosti || '') : '' %>">
+    <label>Tekući račun</label>
+    <input type="text" name="tekuciRacun" value="<%= firma ? (firma.tekuci_racun || '') : '' %>">
+    <button type="submit">Sačuvaj podatke firme</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Logo firme</h2>
+  <% if (firma && firma.logo_putanja) { %>
+    <p>Trenutni logo je postavljen.</p>
+  <% } else { %>
+    <p>Logo još nije postavljen — koristiće se podrazumevani AJAN logo dok se ne uploaduje.</p>
+  <% } %>
+  <form method="post" action="/podesavanja/firma/logo" enctype="multipart/form-data">
+    <label>Novi logo (PNG, JPG ili SVG, do 5MB)</label>
+    <input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg" required>
+    <button type="submit">Uploaduj logo</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Obračun — materijal i rad</h2>
+  <form method="post" action="/podesavanja/obracun">
+    <label>Cena materijala po kg (RSD)</label>
+    <input type="number" step="0.01" name="cenaPoKg" value="<%= podesavanja ? podesavanja.cena_po_kg : '' %>">
+    <label>Procenat rada (20–25%)</label>
+    <input type="number" step="0.1" min="20" max="25" name="procenatRada" value="<%= podesavanja ? podesavanja.procenat_rada : 22.5 %>">
+    <button type="submit">Sačuvaj</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Cena po dužnom metru, po debljini materijala</h2>
+  <table>
+    <thead><tr><th>Debljina (mm)</th><th>Cena po m (RSD)</th><th></th></tr></thead>
+    <tbody>
+      <% cenePoDebljini.forEach(c => { %>
+        <tr>
+          <td><%= c.debljina_mm %></td>
+          <td><%= c.cena_po_m %></td>
+          <td>
+            <form method="post" action="/podesavanja/cena-po-debljini/<%= c.id %>/obrisi" style="margin:0;">
+              <button type="submit" style="background:#a32d2d;margin:0;">Obriši</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <form method="post" action="/podesavanja/cena-po-debljini" style="margin-top:16px;">
+    <label>Debljina (mm)</label>
+    <input type="number" step="0.1" name="debljinaMm" required>
+    <label>Cena po m (RSD)</label>
+    <input type="number" step="0.01" name="cenaPoM" required>
+    <button type="submit">Dodaj / ažuriraj</button>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>
