@@ -24,16 +24,9 @@
 
       <nav class="sidebar-nav">
         <a href="/" class="<%= typeof aktivno !== 'undefined' && aktivno === 'dashboard' ? 'active' : '' %>">Statistika</a>
-        <a href="/komitenti" class="<%= typeof aktivno !== 'undefined' && aktivno === 'komitenti' ? 'active' : '' %>">Komitenti</a>
         <a href="/poslovi" class="<%= typeof aktivno !== 'undefined' && aktivno === 'poslovi' ? 'active' : '' %>">Poslovi</a>
         <a href="/ponude/pretraga" class="<%= typeof aktivno !== 'undefined' && aktivno === 'ponude' ? 'active' : '' %>">Ponude</a>
-        <a href="/podesavanja" class="<%= typeof aktivno !== 'undefined' && aktivno === 'podesavanja' ? 'active' : '' %>">
-          Podešavanja
-          <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %><span class="dot-badge"></span><% } %>
-        </a>
-        <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
-          <a href="/korisnici" class="<%= typeof aktivno !== 'undefined' && aktivno === 'korisnici' ? 'active' : '' %>">Korisnici</a>
-        <% } %>
+        <a href="/komitenti" class="<%= typeof aktivno !== 'undefined' && aktivno === 'komitenti' ? 'active' : '' %>">Komitenti</a>
       </nav>
 
       <div class="sidebar-footer">
@@ -44,6 +37,13 @@
           </div>
         <% } %>
         <a href="/promeni-lozinku" class="link-btn" style="display:block; text-decoration:none;">Promeni lozinku</a>
+        <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+          <a href="/korisnici" class="link-btn" style="display:block; text-decoration:none;">Korisnici</a>
+        <% } %>
+        <a href="/podesavanja" class="link-btn" style="display:block; text-decoration:none;">
+          Podešavanja
+          <% if (typeof updateDostupan !== 'undefined' && updateDostupan) { %><span class="dot-badge" style="margin-left:6px;"></span><% } %>
+        </a>
         <form method="post" action="/odjava" style="margin:0;">
           <button type="submit" class="link-btn">Odjava</button>
         </form>
