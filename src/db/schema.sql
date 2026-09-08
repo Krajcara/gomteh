@@ -166,3 +166,15 @@ CREATE INDEX IF NOT EXISTS idx_ponuda_broj ON ponuda(broj);
 CREATE INDEX IF NOT EXISTS idx_ponuda_datum ON ponuda(datum);
 CREATE INDEX IF NOT EXISTS idx_nalog_posao ON radni_nalog(posao_id);
 CREATE INDEX IF NOT EXISTS idx_nalog_broj ON radni_nalog(broj);
+
+-- Uplate po ponudi (jedna ponuda može imati više parcijalnih uplata)
+CREATE TABLE IF NOT EXISTS uplata (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ponuda_id INTEGER NOT NULL REFERENCES ponuda(id) ON DELETE CASCADE,
+  iznos REAL NOT NULL,
+  datum TEXT NOT NULL DEFAULT (datetime('now')),
+  napomena TEXT,
+  kreirao_korisnik_id INTEGER REFERENCES korisnik(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_uplata_ponuda ON uplata(ponuda_id);

@@ -17,6 +17,17 @@
           <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></td>
           <td><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
         </tr>
+        <% if (p.status === 'prihvacena' && uplatePoPonudi[p.id]) { %>
+          <tr>
+            <td colspan="4" style="padding-top:0; padding-bottom:14px; color:var(--text-muted); font-size:13px;">
+              Plaćeno: <strong style="color:var(--success);"><%= uplatePoPonudi[p.id].placeno.toLocaleString('sr-RS') %> din</strong>
+              &nbsp;·&nbsp;
+              Preostaje: <strong style="color:<%= uplatePoPonudi[p.id].preostalo > 0.01 ? 'var(--warning)' : 'var(--success)' %>;">
+                <%= uplatePoPonudi[p.id].preostalo.toLocaleString('sr-RS') %> din
+              </strong>
+            </td>
+          </tr>
+        <% } %>
       <% }) %>
       <% if (!ponude.length) { %><tr><td colspan="4">Nema ponuda.</td></tr><% } %>
     </tbody>

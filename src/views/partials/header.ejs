@@ -23,6 +23,7 @@
       </div>
 
       <nav class="sidebar-nav">
+        <a href="/" class="<%= typeof aktivno !== 'undefined' && aktivno === 'dashboard' ? 'active' : '' %>">Statistika</a>
         <a href="/komitenti" class="<%= typeof aktivno !== 'undefined' && aktivno === 'komitenti' ? 'active' : '' %>">Komitenti</a>
         <a href="/poslovi" class="<%= typeof aktivno !== 'undefined' && aktivno === 'poslovi' ? 'active' : '' %>">Poslovi</a>
         <a href="/ponude/pretraga" class="<%= typeof aktivno !== 'undefined' && aktivno === 'ponude' ? 'active' : '' %>">Ponude</a>

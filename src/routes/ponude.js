@@ -7,6 +7,7 @@ const fs = require('fs');
 const Ponuda = require('../models/ponuda');
 const Posao = require('../models/posao');
 const Komitent = require('../models/komitent');
+const Uplata = require('../models/uplata');
 const { parsirajPlanSecenja } = require('../services/pdfParser');
 const { izracunajMetode } = require('../services/obracun');
 const { generisiPrevedeniPlan, generisiPonudaPdf } = require('../services/pdfGenerator');
@@ -84,8 +85,11 @@ router.get('/ponude/:id', (req, res) => {
   const komitent = Komitent.poId(posao.komitent_id);
   const stavke = Ponuda.stavke(ponuda.id);
   const planovi = Ponuda.planoviSecenja(ponuda.id);
+  const uplate = Uplata.poPonudi(ponuda.id);
+  const placeno = Uplata.ukupnoPlaceno(ponuda.id);
+  const preostalo = (ponuda.ukupno || 0) - placeno;
 
-  res.render('ponude/detalji', { ponuda, posao, komitent, stavke, planovi });
+  res.render('ponude/detalji', { ponuda, posao, komitent, stavke, planovi, uplate, placeno, preostalo });
 });
 
 // Ručno dodavanje stavke
@@ -174,6 +178,21 @@ router.get('/ponude/:id/dokument-odbijanja', (req, res) => {
     return res.status(404).render('greska', { poruka: 'Dokument nije pronađen.' });
   }
   res.download(ponuda.dokument_odbijanja_putanja);
+});
+
+// Uplate — samo za prihvaćene ponude
+router.post('/ponude/:id/uplate', MOZE_PONUDE, (req, res) => {
+  Uplata.dodaj(req.params.id, {
+    iznos: parseFloat(req.body.iznos),
+    napomena: req.body.napomena,
+    korisnikId: req.session.korisnik.id,
+  });
+  res.redirect(`/ponude/${req.params.id}`);
+});
+
+router.post('/ponude/:id/uplate/:uplataId/obrisi', MOZE_PONUDE, (req, res) => {
+  Uplata.obrisi(req.params.uplataId);
+  res.redirect(`/ponude/${req.params.id}`);
 });
 
 module.exports = router;

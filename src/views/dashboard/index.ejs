@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<div class="page-head"><h1>Statistika naplate</h1></div>
+
+<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Ukupno naplativo (prihvaćene ponude)</span>
+    <div style="font-size:24px; font-weight:700; margin-top:6px;"><%= ukupnoNaplativo.toLocaleString('sr-RS') %> din</div>
+  </div>
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Naplaćeno</span>
+    <div style="font-size:24px; font-weight:700; margin-top:6px; color:var(--success);"><%= ukupnoPlaceno.toLocaleString('sr-RS') %> din</div>
+  </div>
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Preostaje za naplatu</span>
+    <div style="font-size:24px; font-weight:700; margin-top:6px; color:<%= ukupnoDug > 0 ? 'var(--warning)' : 'var(--success)' %>;"><%= ukupnoDug.toLocaleString('sr-RS') %> din</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Po komitentu</h2>
+  <table>
+    <thead><tr><th>Komitent</th><th>Ukupno</th><th>Plaćeno</th><th>Dug</th></tr></thead>
+    <tbody>
+      <% komitentiLista.forEach(k => { %>
+        <tr onclick="location.href='/komitenti/<%= k.id %>'">
+          <td><%= k.naziv %></td>
+          <td><%= k.ukupno.toLocaleString('sr-RS') %> din</td>
+          <td><%= k.placeno.toLocaleString('sr-RS') %> din</td>
+          <td style="color:<%= k.preostalo > 0.01 ? 'var(--warning)' : 'var(--success)' %>; font-weight:600;">
+            <%= k.preostalo.toLocaleString('sr-RS') %> din
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!komitentiLista.length) { %><tr><td colspan="4">Nema prihvaćenih ponuda.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Ponude sa dugom (najveći prvo)</h2>
+  <table>
+    <thead><tr><th>Broj</th><th>Komitent</th><th>Posao</th><th>Ukupno</th><th>Plaćeno</th><th>Dug</th></tr></thead>
+    <tbody>
+      <% ponudeSaDugom.forEach(p => { %>
+        <tr onclick="location.href='/ponude/<%= p.id %>'">
+          <td><%= p.broj %></td>
+          <td><%= p.komitent_naziv %></td>
+          <td><%= p.posao_naziv %></td>
+          <td><%= (p.ukupno || 0).toLocaleString('sr-RS') %> din</td>
+          <td><%= p.placeno.toLocaleString('sr-RS') %> din</td>
+          <td style="color:var(--warning); font-weight:600;"><%= p.preostalo.toLocaleString('sr-RS') %> din</td>
+        </tr>
+      <% }) %>
+      <% if (!ponudeSaDugom.length) { %><tr><td colspan="6">Nema neizmirenih ponuda — sve je naplaćeno.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

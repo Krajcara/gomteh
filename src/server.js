@@ -41,13 +41,12 @@ app.use('/', require('./routes/auth'));
 app.use('/komitenti', require('./routes/komitenti'));
 app.use('/podesavanja', require('./routes/podesavanja'));
 app.use('/korisnici', require('./routes/korisnici'));
-app.use('/portal', require('./routes/portal')); // MORA pre '/' mountovanih ruta ispod (poslovi/ponude/radniNalozi
+app.use('/portal', require('./routes/portal')); // MORA pre '/' mountovanih ruta ispod (poslovi/ponude/radniNalozi/dashboard
                                                   // globalno presreću sve na '/' svojim zahtevajLogin middleware-om)
+app.use('/', require('./routes/dashboard'));
 app.use('/', require('./routes/poslovi'));
 app.use('/', require('./routes/ponude'));
 app.use('/', require('./routes/radniNalozi'));
-
-app.get('/', (req, res) => res.redirect('/komitenti'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

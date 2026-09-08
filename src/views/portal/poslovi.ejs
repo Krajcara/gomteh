@@ -2,6 +2,23 @@
 
 <h1>Vaši poslovi</h1>
 
+<div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Ukupno (prihvaćene ponude)</span>
+    <div style="font-size:22px; font-weight:700; margin-top:6px;"><%= statistika.ukupno.toLocaleString('sr-RS') %> din</div>
+  </div>
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Plaćeno</span>
+    <div style="font-size:22px; font-weight:700; margin-top:6px; color:var(--success);"><%= statistika.placeno.toLocaleString('sr-RS') %> din</div>
+  </div>
+  <div class="card">
+    <span style="color:var(--text-muted); font-size:13px;">Preostaje za uplatu</span>
+    <div style="font-size:22px; font-weight:700; margin-top:6px; color:<%= statistika.preostalo > 0.01 ? 'var(--warning)' : 'var(--success)' %>;">
+      <%= statistika.preostalo.toLocaleString('sr-RS') %> din
+    </div>
+  </div>
+</div>
+
 <table>
   <thead><tr><th>Naziv posla</th><th>Status</th></tr></thead>
   <tbody>
