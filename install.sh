@@ -63,9 +63,53 @@ echo "Kreiram bazu i admin nalog..."
 ADMIN_PASSWORD="$ADMIN_PASSWORD" node scripts/seed-admin.js
 
 echo ""
+echo "Podešavam automatsko pokretanje (systemd)..."
+
+INSTALL_USER=$(whoami)
+INSTALL_DIR=$(pwd)
+NPM_PATH=$(command -v npm)
+
+sudo tee /etc/systemd/system/gomteh.service > /dev/null << EOF
+[Unit]
+Description=GOMTEH - aplikacija za ponude i radne naloge
+After=network.target
+
+[Service]
+Type=simple
+User=${INSTALL_USER}
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=${NPM_PATH} start
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable gomteh
+sudo systemctl start gomteh
+
+sleep 1
+if sudo systemctl is-active --quiet gomteh; then
+  SERVIS_STATUS="Servis radi (active)."
+else
+  SERVIS_STATUS="UPOZORENJE: servis nije aktivan — proveri 'sudo systemctl status gomteh' i 'sudo journalctl -u gomteh -n 50'."
+fi
+
+echo ""
 echo "=== Instalacija završena ==="
 echo "Admin korisničko ime: admin@gomteh.local"
 echo "Admin lozinka (zapiši je odmah, neće biti ponovo prikazana): $ADMIN_PASSWORD"
 echo ""
 echo "Lozinka će morati da se promeni pri prvom logovanju."
-echo "Pokreni aplikaciju sa: npm start"
+echo ""
+echo "$SERVIS_STATUS"
+echo "Aplikacija je dostupna na: http://$(hostname -I 2>/dev/null | awk '{print $1}'):3000 (ili http://localhost:3000 sa samog servera)"
+echo "Sama će se pokrenuti pri svakom restartu servera, i restartovati ako se sruši."
+echo ""
+echo "Korisne komande:"
+echo "  sudo systemctl status gomteh    — proveri status"
+echo "  sudo journalctl -u gomteh -f    — prati logove uživo"
+echo "  sudo systemctl restart gomteh   — ručni restart"

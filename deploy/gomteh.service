@@ -2,9 +2,12 @@
 Description=GOMTEH - aplikacija za ponude i radne naloge
 After=network.target
 
+# NAPOMENA: ovaj fajl se automatski generiše i instalira pri pokretanju install.sh
+# (sa tačnim korisnikom i putanjom). Ovde je samo kao referenca/fallback za ručnu instalaciju.
+
 [Service]
 Type=simple
-# IZMENI User i WorkingDirectory da odgovaraju tvom serveru
+# IZMENI User i WorkingDirectory da odgovaraju tvom serveru (ako ga ručno instaliraš)
 User=krajcara
 WorkingDirectory=/home/krajcara/gomteh
 ExecStart=/usr/bin/npm start
