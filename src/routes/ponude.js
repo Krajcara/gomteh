@@ -38,8 +38,9 @@ router.get('/ponude/pretraga', (req, res) => {
 router.get('/poslovi/:posaoId/ponude/nova', MOZE_PONUDE, (req, res) => {
   const posao = Posao.poId(req.params.posaoId);
   if (!posao) return res.status(404).render('greska', { poruka: 'Posao nije pronađen.' });
+  const komitent = Komitent.poId(posao.komitent_id);
   const dostupniPlanovi = PlanSecenja.dostupniZaPosao(posao.id);
-  res.render('ponude/forma', { posao, dostupniPlanovi });
+  res.render('ponude/forma', { posao, komitent, dostupniPlanovi });
 });
 
 router.post('/poslovi/:posaoId/ponude', MOZE_PONUDE, (req, res) => {

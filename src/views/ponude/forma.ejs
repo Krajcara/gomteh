@@ -24,10 +24,10 @@
   <% } %>
 
   <label>Primio (mesto)</label>
-  <input type="text" name="primioMesto">
+  <input type="text" name="primioMesto" value="<%= komitent.naziv %>">
 
   <label>Naslov posla</label>
-  <input type="text" name="naslovPosla" placeholder="npr. Adaptacija metalne konstrukcije...">
+  <input type="text" name="naslovPosla" value="<%= posao.naziv %>" placeholder="npr. Adaptacija metalne konstrukcije...">
 
   <label>Propratni tekst</label>
   <textarea name="propratniTekst" rows="3"></textarea>
