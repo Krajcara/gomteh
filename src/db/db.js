@@ -97,7 +97,18 @@ function migrirajPlanSecenja() {
     console.log('Migracija završena — postojeći planovi sečenja su sačuvani i povezani sa svojim poslovima.');
   });
 
-  transakcija();
+  // VAŽNO: "DROP TABLE" u SQLite-u, kad je foreign_keys uključen, ponaša se kao da su prvo
+  // ručno obrisani svi redovi te tabele — što OKIDA "ON DELETE CASCADE" kod svake druge tabele
+  // koja je (privremeno, zbog preimenovanja) referencira. Bez ovoga bi se, npr., prilikom
+  // brisanja privremene "plan_secenja_stara" tabele, kaskadno obrisali SVI redovi u
+  // deo_iz_plana (jer njihova FK definicija u tom trenutku pokazuje na tu privremenu tabelu).
+  // Zato se FK provera OBAVEZNO isključuje pre migracije i vraća tek posle.
+  db.pragma('foreign_keys = OFF');
+  try {
+    transakcija();
+  } finally {
+    db.pragma('foreign_keys = ON');
+  }
 }
 
 try {
@@ -106,6 +117,48 @@ try {
   console.error('GREŠKA pri migraciji baze (plan_secenja):', e.message);
   console.error('Aplikacija nastavlja da se pokreće, ali planovi sečenja možda neće raditi ispravno.');
   console.error('Javi se za pomoć oko ručnog popravljanja baze ako se ovo ponavlja.');
+}
+
+// SQLite pri "ALTER TABLE ... RENAME" automatski prepravlja definicije stranih ključeva
+// (foreign key) u DRUGIM tabelama da pokazuju na novo ime. Migracija iznad je preimenovala
+// plan_secenja -> plan_secenja_stara (privremeno), pa je deo_iz_plana ostala da referencira
+// baš to privremeno ime — i posle brisanja te privremene tabele, svaki upis u deo_iz_plana
+// (npr. pri uploadu NOVOG plana) pukne sa "no such table: plan_secenja_stara". Ovo je nezavisna
+// provera/popravka koja se pokreće na svakom startu i sama otkloni tu pokvarenu referencu,
+// bilo da je nastala upravo sad ili u nekom ranijem pokretanju pre ove ispravke.
+function popraviFkReferencuDeoIzPlana() {
+  const tabela = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='deo_iz_plana'").get();
+  if (!tabela || !tabela.sql.includes('plan_secenja_stara')) return; // ne postoji ili je već ispravna
+
+  console.log('Popravka baze: deo_iz_plana referencira privremenu tabelu iz migracije — ispravljam...');
+
+  db.pragma('foreign_keys = OFF'); // FK se ne može menjati usred transakcije, mora pre nje
+  try {
+    const transakcija = db.transaction(() => {
+      db.exec('ALTER TABLE deo_iz_plana RENAME TO deo_iz_plana_privremeno');
+      db.exec(`
+        CREATE TABLE deo_iz_plana (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plan_secenja_id INTEGER NOT NULL REFERENCES plan_secenja(id) ON DELETE CASCADE,
+          part_name TEXT NOT NULL,
+          part_size TEXT,
+          kolicina_plan INTEGER NOT NULL
+        )
+      `);
+      db.exec('INSERT INTO deo_iz_plana SELECT * FROM deo_iz_plana_privremeno');
+      db.exec('DROP TABLE deo_iz_plana_privremeno');
+    });
+    transakcija();
+    console.log('Popravka FK reference u deo_iz_plana završena.');
+  } finally {
+    db.pragma('foreign_keys = ON');
+  }
+}
+
+try {
+  popraviFkReferencuDeoIzPlana();
+} catch (e) {
+  console.error('GREŠKA pri popravci deo_iz_plana:', e.message);
 }
 
 // Primeni šemu (idempotentno — CREATE TABLE IF NOT EXISTS)
