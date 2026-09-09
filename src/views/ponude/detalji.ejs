@@ -1,6 +1,11 @@
 <%- include('../partials/header') %>
 
-<h1>Ponuda br. <%= ponuda.broj %></h1>
+<div class="page-head">
+  <div>
+    <a href="/poslovi/<%= posao.id %>" style="color:var(--text-muted); font-size:13px;">&larr; Nazad na posao</a>
+    <h1 style="margin-top:4px;">Ponuda br. <%= ponuda.broj %></h1>
+  </div>
+</div>
 <p>
   <strong>Posao:</strong> <a href="/poslovi/<%= posao.id %>"><%= posao.naziv %></a> ·
   <strong>Komitent:</strong> <a href="/komitenti/<%= komitent.id %>"><%= komitent.naziv %></a>
