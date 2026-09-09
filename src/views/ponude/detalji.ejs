@@ -9,6 +9,14 @@
   <% if (ponuda.je_automatska_za_visak) { %> <em>(automatski generisana za višak količine)</em><% } %>
 </p>
 
+<% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+  <form method="post" action="/ponude/<%= ponuda.id %>/obrisi"
+        onsubmit="return confirm('OBRISATI PONUDU <%= ponuda.broj %>?\n\nOvo trajno briše:\n- <%= uticajBrisanja.brojNaloga %> radnih naloga\n- <%= uticajBrisanja.brojUplata %> uplata (ukupno <%= uticajBrisanja.ukupnoUplata.toLocaleString('sr-RS') %> din)\n- sve stavke cene ove ponude\n\n<%= uticajBrisanja.brojPlanova %> povezan(ih) plan(ova) sečenja NEĆE biti obrisan, samo će se otkačiti.\n\nOVO SE NE MOŽE PONIŠTITI. Nastaviti?');"
+        style="margin-bottom:16px;">
+    <button type="submit" style="background:var(--danger);">Obriši ponudu</button>
+  </form>
+<% } %>
+
 <% if (ponuda.status === 'poslata') { %>
 <div class="card">
   <form method="post" action="/ponude/<%= ponuda.id %>/prihvati" style="display:inline-block; margin-right:10px;">

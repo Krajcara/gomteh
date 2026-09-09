@@ -80,7 +80,37 @@ function ponovoIzracunajMetode(planSecenjaId) {
   return poId(planSecenjaId);
 }
 
+// Da li postoje radni nalozi koji već koriste delove iz ovog plana (blokira brisanje ako da)
+function imaPovezaneRadneNaloge(planSecenjaId) {
+  const rezultat = db
+    .prepare(`
+      SELECT COUNT(*) as n FROM stavka_naloga
+      WHERE deo_iz_plana_id IN (SELECT id FROM deo_iz_plana WHERE plan_secenja_id = ?)
+    `)
+    .get(planSecenjaId);
+  return rezultat.n > 0;
+}
+
+function obrisi(planSecenjaId) {
+  const fs = require('fs');
+  const plan = poId(planSecenjaId);
+  if (!plan) throw new Error('Plan sečenja nije pronađen.');
+
+  if (imaPovezaneRadneNaloge(planSecenjaId)) {
+    throw new Error(
+      'Ne može se obrisati — postoje radni nalozi koji koriste delove iz ovog plana. Prvo obriši ili izmeni te radne naloge.'
+    );
+  }
+
+  db.prepare('DELETE FROM plan_secenja WHERE id = ?').run(planSecenjaId); // kaskadno briše deo_iz_plana
+
+  [plan.originalni_fajl_putanja, plan.preveden_fajl_putanja].forEach((p) => {
+    if (p && fs.existsSync(p)) fs.unlinkSync(p);
+  });
+}
+
 module.exports = {
   poId, poPosaoId, dostupniZaPosao, poPonudi, delovi,
   sacuvaj, povezisaPonudom, otkaciOdPonude, ponovoIzracunajMetode,
+  imaPovezaneRadneNaloge, obrisi,
 };

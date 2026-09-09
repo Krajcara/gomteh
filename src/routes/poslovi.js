@@ -12,7 +12,7 @@ const db = require('../db/db');
 const { parsirajPlanSecenja } = require('../services/pdfParser');
 const { izracunajMetode } = require('../services/obracun');
 const { generisiPrevedeniPlan } = require('../services/pdfGenerator');
-const { zahtevajLogin, MOZE_PONUDE, MOZE_MENJATI } = require('../middleware/auth');
+const { zahtevajLogin, MOZE_PONUDE, MOZE_MENJATI, SAMO_ADMIN } = require('../middleware/auth');
 
 const UPLOAD_DIR = path.join(__dirname, '../../data/uploads/planovi');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -71,12 +71,19 @@ router.get('/poslovi/:id', (req, res) => {
   const ponude = Ponuda.poPosaoId(posao.id);
   const radniNalozi = db.prepare('SELECT * FROM radni_nalog WHERE posao_id = ? ORDER BY datum DESC').all(posao.id);
   const planovi = PlanSecenja.poPosaoId(posao.id);
+  const uticajBrisanja = Posao.izracunajUticajBrisanja(posao.id);
 
   // Broj ponude po ponuda_id, za prikaz "povezan sa ponudom X" pored svakog plana
   const ponudeMape = {};
   ponude.forEach((p) => { ponudeMape[p.id] = p.broj; });
 
-  res.render('poslovi/detalji', { posao, komitent, ponude, radniNalozi, planovi, ponudeMape });
+  res.render('poslovi/detalji', { posao, komitent, ponude, radniNalozi, planovi, ponudeMape, uticajBrisanja });
+});
+
+// Uticaj brisanja (za prikaz u potvrdi) + samo brisanje
+router.post('/poslovi/:id/obrisi', SAMO_ADMIN, (req, res) => {
+  Posao.obrisi(req.params.id);
+  res.redirect('/poslovi');
 });
 
 // Ručna promena statusa (završen / odbijen)
@@ -124,6 +131,15 @@ router.get('/poslovi/:posaoId/planovi/:planId/preuzmi', (req, res) => {
     return res.status(404).render('greska', { poruka: 'Prevedeni plan nije pronađen.' });
   }
   res.download(plan.preveden_fajl_putanja, 'plan-secenja-prevod.pdf');
+});
+
+router.post('/poslovi/:posaoId/planovi/:planId/obrisi', SAMO_ADMIN, (req, res) => {
+  try {
+    PlanSecenja.obrisi(req.params.planId);
+    res.redirect(`/poslovi/${req.params.posaoId}`);
+  } catch (greska) {
+    res.status(400).render('greska', { poruka: greska.message });
+  }
 });
 
 module.exports = router;

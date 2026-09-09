@@ -1,6 +1,14 @@
 <%- include('../partials/header') %>
 
-<h1><%= posao.naziv %></h1>
+<div class="page-head">
+  <h1><%= posao.naziv %></h1>
+  <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+    <form method="post" action="/poslovi/<%= posao.id %>/obrisi"
+          onsubmit="return confirm('OBRISATI POSAO \'<%= posao.naziv %>\'?\n\nOvo trajno briše:\n- <%= uticajBrisanja.brojPonuda %> ponuda\n- <%= uticajBrisanja.brojNaloga %> radnih naloga\n- <%= uticajBrisanja.brojPlanova %> planova sečenja\n- <%= uticajBrisanja.brojUplata %> uplata (ukupno <%= uticajBrisanja.ukupnoUplata.toLocaleString('sr-RS') %> din)\n\nOVO SE NE MOŽE PONIŠTITI. Nastaviti?');">
+      <button type="submit" style="background:var(--danger); margin:0;">Obriši posao</button>
+    </form>
+  <% } %>
+</div>
 <p><strong>Komitent:</strong> <a href="/komitenti/<%= komitent.id %>"><%= komitent.naziv %></a></p>
 
 <div class="card">
@@ -49,6 +57,12 @@
           <td>
             <% if (p.preveden_fajl_putanja) { %>
               <a href="/poslovi/<%= posao.id %>/planovi/<%= p.id %>/preuzmi">Preuzmi prevod</a>
+            <% } %>
+            <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+              <form method="post" action="/poslovi/<%= posao.id %>/planovi/<%= p.id %>/obrisi" style="display:inline; margin-left:8px;"
+                    onsubmit="return confirm('Obrisati plan sečenja \'<%= p.naziv_fajla %>\'?\n\nOvo se ne može poništiti. Ako je povezan sa ponudom, veza se uklanja ali dodate stavke cene ostaju.');">
+                <button type="submit" style="background:var(--danger); margin:0; padding:4px 8px; font-size:12px;">Obriši</button>
+              </form>
             <% } %>
           </td>
         </tr>

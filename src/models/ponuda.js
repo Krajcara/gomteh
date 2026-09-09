@@ -101,8 +101,33 @@ function pretraga({ komitentId, datumOd, datumDo, broj }) {
   return db.prepare(upit).all(...uslovi);
 }
 
+// Šta će sve nestati ako se ponuda obriše
+function izracunajUticajBrisanja(ponudaId) {
+  const brojNaloga = db.prepare('SELECT COUNT(*) as n FROM radni_nalog WHERE ponuda_id = ?').get(ponudaId).n;
+  const brojPlanova = db.prepare('SELECT COUNT(*) as n FROM plan_secenja WHERE ponuda_id = ?').get(ponudaId).n;
+  const uplate = db
+    .prepare('SELECT COUNT(*) as n, COALESCE(SUM(iznos), 0) as suma FROM uplata WHERE ponuda_id = ?')
+    .get(ponudaId);
+  return { brojNaloga, brojPlanova, brojUplata: uplate.n, ukupnoUplata: uplate.suma };
+}
+
+// Briše ponudu i sve pod njom (radne naloge, stavke, uplate). Planovi sečenja se
+// NE brišu — samo se otkače (postaju opet dostupni na nivou posla).
+function obrisi(ponudaId) {
+  const transakcija = db.transaction(() => {
+    db.prepare(`
+      DELETE FROM stavka_naloga
+      WHERE radni_nalog_id IN (SELECT id FROM radni_nalog WHERE ponuda_id = ?)
+    `).run(ponudaId);
+    db.prepare('DELETE FROM radni_nalog WHERE ponuda_id = ?').run(ponudaId);
+    db.prepare('DELETE FROM ponuda WHERE id = ?').run(ponudaId); // kaskadno briše stavka_ponude, uplata; oslobađa planove
+  });
+  transakcija();
+}
+
 module.exports = {
   poId, poPosaoId, stavke,
   kreiraj, dodajStavku, obrisiStavku, preracunajUkupno,
   izaberiMetodIDodajStavku, promeniStatus, pretraga,
+  izracunajUticajBrisanja, obrisi,
 };

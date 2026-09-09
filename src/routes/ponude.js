@@ -10,7 +10,7 @@ const Komitent = require('../models/komitent');
 const Uplata = require('../models/uplata');
 const PlanSecenja = require('../models/planSecenja');
 const { generisiPonudaPdf } = require('../services/pdfGenerator');
-const { zahtevajLogin, MOZE_PONUDE } = require('../middleware/auth');
+const { zahtevajLogin, MOZE_PONUDE, SAMO_ADMIN } = require('../middleware/auth');
 
 const ODBIJANJE_DIR = path.join(__dirname, '../../data/uploads/odbijanja');
 fs.mkdirSync(ODBIJANJE_DIR, { recursive: true });
@@ -78,10 +78,18 @@ router.get('/ponude/:id', (req, res) => {
   const uplate = Uplata.poPonudi(ponuda.id);
   const placeno = Uplata.ukupnoPlaceno(ponuda.id);
   const preostalo = (ponuda.ukupno || 0) - placeno;
+  const uticajBrisanja = Ponuda.izracunajUticajBrisanja(ponuda.id);
 
   res.render('ponude/detalji', {
-    ponuda, posao, komitent, stavke, planovi, dostupniPlanovi, uplate, placeno, preostalo,
+    ponuda, posao, komitent, stavke, planovi, dostupniPlanovi, uplate, placeno, preostalo, uticajBrisanja,
   });
+});
+
+router.post('/ponude/:id/obrisi', SAMO_ADMIN, (req, res) => {
+  const ponuda = Ponuda.poId(req.params.id);
+  if (!ponuda) return res.status(404).render('greska', { poruka: 'Ponuda nije pronađena.' });
+  Ponuda.obrisi(req.params.id);
+  res.redirect(`/poslovi/${ponuda.posao_id}`);
 });
 
 // Ručno dodavanje stavke
