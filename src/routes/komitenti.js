@@ -69,6 +69,16 @@ router.post('/:id/reset-lozinka', MOZE_MENJATI, (req, res) => {
     });
   }
 
+  const rucnaLozinka = (req.body.novaLozinka || '').trim();
+
+  if (rucnaLozinka) {
+    if (rucnaLozinka.length < 4) {
+      return res.status(400).render('greska', { poruka: 'Lozinka mora imati najmanje 4 karaktera.' });
+    }
+    Komitent.postaviLozinku(req.params.id, rucnaLozinka, true);
+    return res.render('komitenti/lozinka-rezultat', { komitent, novaLozinka: rucnaLozinka });
+  }
+
   const novaLozinka = Komitent.resetujLozinku(req.params.id);
   res.render('komitenti/lozinka-rezultat', { komitent, novaLozinka });
 });

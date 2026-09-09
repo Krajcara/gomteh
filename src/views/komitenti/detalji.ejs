@@ -14,9 +14,12 @@
   <p><strong>Email (portal):</strong> <%= komitent.email || '—' %></p>
   <a class="btn" href="/komitenti/<%= komitent.id %>/izmeni">Izmeni podatke</a>
   <% if (komitent.email) { %>
-    <form method="post" action="/komitenti/<%= komitent.id %>/reset-lozinka" style="display:inline;"
-          onsubmit="return confirm('Generisati novu lozinku za portal ovog komitenta? Stara lozinka prestaje da važi.');">
-      <button type="submit">Resetuj lozinku za portal</button>
+    <form method="post" action="/komitenti/<%= komitent.id %>/reset-lozinka" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+      <label>Nova lozinka za portal (ostavi prazno za automatski generisanu)</label>
+      <input type="text" name="novaLozinka" placeholder="npr. jednostavna lozinka po dogovoru sa klijentom" style="max-width:320px;">
+      <button type="submit" onclick="return confirm('Postaviti novu lozinku za portal ovog komitenta? Stara lozinka prestaje da važi.');">
+        Resetuj lozinku za portal
+      </button>
     </form>
   <% } %>
 </div>
