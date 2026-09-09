@@ -330,20 +330,7 @@ function generisiPonudaPdf(ponudaId) {
   // Naslov ponude — centriran, na sredini strane
   doc.font('Bold').fontSize(15).text(`Ponuda br. ${ponuda.broj}`, 40, doc.y, { width: 515, align: 'center' });
   doc.font('Regular');
-  doc.moveDown();
-
-  // Primio/Sastavio — manjim slovima, ispod naslova
-  const yPrimio = doc.y;
-  doc.fontSize(9).fillColor('#555555');
-  doc.text(`Primio: ${ponuda.primio_mesto || ''}`, 40, yPrimio, { width: 250 });
-  doc.text(new Date(ponuda.datum).toLocaleDateString('sr-RS'), 40, doc.y, { width: 250 });
-  doc.text('Sastavio:', 300, yPrimio, { width: 200 });
-  doc.text(sastavio ? sastavio.ime : '', 300, yPrimio + doc.currentLineHeight(), { width: 200 });
-  doc.fillColor('#000000');
-
-  doc.y = yPrimio + doc.currentLineHeight() * 2;
-  doc.x = 40;
-  doc.moveDown();
+  doc.moveDown(1.5);
 
   if (ponuda.naslov_posla) {
     doc.font('Bold').fontSize(11).text(ponuda.naslov_posla, { align: 'center' });
@@ -393,6 +380,18 @@ function generisiPonudaPdf(ponudaId) {
   if (ponuda.garancija) { doc.fontSize(10).text(`Garancija: ${ponuda.garancija}`); doc.moveDown(0.3); }
   if (ponuda.napomena) { doc.moveDown(0.3); doc.fontSize(9).text(`NAPOMENA: ${ponuda.napomena}`); }
   if (ponuda.rok_vazenja) { doc.fontSize(9).text(`Rok važenja ponude je ${ponuda.rok_vazenja}`); }
+
+  // Podnožje pri dnu strane: Primio (levo) | Mesto firme, datum (sredina) | Sastavio (desno)
+  const dnoY = doc.page.height - doc.page.margins.bottom - 26;
+  doc.fontSize(9).fillColor('#555555');
+  doc.text(`Primio: ${ponuda.primio_mesto || ''}`, 40, dnoY, { width: 170 });
+  doc.text(
+    `${firma && firma.mesto ? firma.mesto : ''}, ${new Date(ponuda.datum).toLocaleDateString('sr-RS')}`,
+    0, dnoY, { width: doc.page.width, align: 'center' }
+  );
+  doc.text('Sastavio:', 405, dnoY, { width: 150 });
+  doc.text(sastavio ? sastavio.ime : '', 405, dnoY + doc.currentLineHeight(), { width: 150 });
+  doc.fillColor('#000000');
 
   // "Strana X od Y" — dodaje se sad na svaku stranu, pošto tek sad znamo ukupan broj strana
   const brojStrana = doc.bufferedPageRange().count;
