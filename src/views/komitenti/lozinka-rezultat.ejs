@@ -1,0 +1,14 @@
+<%- include('../partials/header') %>
+<h1>Lozinka resetovana</h1>
+
+<div class="card" style="max-width:460px;">
+  <p><strong><%= komitent.naziv %></strong> (<%= komitent.email %>)</p>
+  <p style="color:var(--warning); font-weight:600;">Zapiši/pošalji ovu lozinku odmah — neće biti ponovo prikazana:</p>
+  <p style="font-size:20px; font-family:monospace; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+    <%= novaLozinka %>
+  </p>
+  <p style="color:var(--text-muted); font-size:13px;">Komitent će morati da je promeni pri sledećem logovanju na portal.</p>
+  <a class="btn" href="/komitenti/<%= komitent.id %>">Nazad na komitenta</a>
+</div>
+
+<%- include('../partials/footer') %>

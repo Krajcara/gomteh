@@ -60,4 +60,17 @@ router.post('/:id/izmeni', MOZE_MENJATI, (req, res) => {
   res.redirect(`/komitenti/${req.params.id}`);
 });
 
+router.post('/:id/reset-lozinka', MOZE_MENJATI, (req, res) => {
+  const komitent = Komitent.poId(req.params.id);
+  if (!komitent) return res.status(404).render('greska', { poruka: 'Komitent nije pronađen.' });
+  if (!komitent.email) {
+    return res.status(400).render('greska', {
+      poruka: 'Komitent nema unet email — prvo dodaj email da bi mogao da pristupa portalu.',
+    });
+  }
+
+  const novaLozinka = Komitent.resetujLozinku(req.params.id);
+  res.render('komitenti/lozinka-rezultat', { komitent, novaLozinka });
+});
+
 module.exports = router;

@@ -1,5 +1,10 @@
 const db = require('../db/db');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+
+function generisiLozinku() {
+  return crypto.randomBytes(9).toString('base64').replace(/[+/=]/g, '');
+}
 
 const svi = () => db.prepare('SELECT * FROM komitent ORDER BY naziv').all();
 
@@ -54,6 +59,12 @@ function postaviLozinku(id, novaLozinka, mustChange = false) {
   ).run(hash, mustChange ? 1 : 0, id);
 }
 
+function resetujLozinku(id) {
+  const lozinka = generisiLozinku();
+  postaviLozinku(id, lozinka, true);
+  return lozinka;
+}
+
 function proveriLozinku(email, lozinka) {
   const komitent = poEmailu(email);
   if (!komitent || !komitent.lozinka_hash) return null;
@@ -68,5 +79,6 @@ module.exports = {
   kreiraj,
   azuriraj,
   postaviLozinku,
+  resetujLozinku,
   proveriLozinku,
 };
