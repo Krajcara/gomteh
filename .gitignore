@@ -6,5 +6,8 @@ data/
 node_modules/
 npm-debug.log
 
+# Auto-generisani vendor fajlovi (kopiraju se iz node_modules pri npm install)
+public/vendor/
+
 # OS
 .DS_Store
