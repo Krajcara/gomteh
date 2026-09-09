@@ -142,6 +142,12 @@ router.post('/ponude/:id/planovi/:planId/izaberi-metod', MOZE_PONUDE, (req, res)
   res.redirect(`/ponude/${req.params.id}`);
 });
 
+// Ponovni obračun (npr. ako je cena po debljini dodata NAKON uploada plana)
+router.post('/ponude/:id/planovi/:planId/ponovo-izracunaj', MOZE_PONUDE, (req, res) => {
+  Ponuda.ponovoIzracunajMetode(req.params.planId);
+  res.redirect(`/ponude/${req.params.id}`);
+});
+
 router.get('/ponude/:id/planovi/:planId/preuzmi', (req, res) => {
   const plan = require('../db/db').prepare('SELECT preveden_fajl_putanja FROM plan_secenja WHERE id = ?').get(req.params.planId);
   if (!plan || !plan.preveden_fajl_putanja) return res.status(404).render('greska', { poruka: 'Prevedeni plan nije pronađen.' });

@@ -96,6 +96,24 @@ function izaberiMetodIDodajStavku(planSecenjaId, metod) {
   });
 }
 
+function ponovoIzracunajMetode(planSecenjaId) {
+  const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
+  if (!plan) throw new Error('Plan sečenja nije pronađen.');
+
+  const { izracunajMetode } = require('../services/obracun');
+  const { metod1, metod2 } = izracunajMetode({
+    tezinaDelovaKg: plan.tezina_delova_kg,
+    duzinaRezaMm: plan.duzina_reza_mm,
+    debljinaMm: plan.debljina_mm,
+  });
+
+  db.prepare('UPDATE plan_secenja SET metod_1_iznos = ?, metod_2_iznos = ? WHERE id = ?').run(
+    metod1, metod2, planSecenjaId
+  );
+
+  return db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
+}
+
 function promeniStatus(id, noviStatus, { komentar, dokumentPutanja } = {}) {
   const ponuda = poId(id);
   if (!ponuda) throw new Error('Ponuda nije pronađena.');
@@ -136,5 +154,5 @@ function pretraga({ komitentId, datumOd, datumDo, broj }) {
 module.exports = {
   poId, poPosaoId, stavke, planoviSecenja, delovi,
   kreiraj, dodajStavku, obrisiStavku, preracunajUkupno,
-  sacuvajPlanSecenja, izaberiMetodIDodajStavku, promeniStatus, pretraga,
+  sacuvajPlanSecenja, izaberiMetodIDodajStavku, ponovoIzracunajMetode, promeniStatus, pretraga,
 };

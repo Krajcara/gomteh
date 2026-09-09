@@ -54,6 +54,11 @@
         <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
           <button type="submit" name="metod" value="2" <%= !p.metod_2_iznos ? 'disabled' : '' %>>Koristi metod 2</button>
         </form>
+        <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/ponovo-izracunaj" style="display:inline;">
+          <button type="submit" title="Ako si cenu po debljini dodao/la posle uploada ovog plana" style="background:var(--bg-elevated-2); color:var(--text);">
+            Osveži obračun
+          </button>
+        </form>
       <% } %>
       <a href="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/preuzmi">Preuzmi prevedeni plan (PDF)</a>
     </div>
