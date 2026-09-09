@@ -10,9 +10,9 @@
     <% }) %>
   </select>
   <label>Datum od</label>
-  <input type="date" name="datumOd" value="<%= filter.datumOd || '' %>">
+  <input type="text" name="datumOd" class="datepicker" placeholder="dd/mm/yyyy" value="<%= filter.datumOd || '' %>">
   <label>Datum do</label>
-  <input type="date" name="datumDo" value="<%= filter.datumDo || '' %>">
+  <input type="text" name="datumDo" class="datepicker" placeholder="dd/mm/yyyy" value="<%= filter.datumDo || '' %>">
   <label>Broj ponude</label>
   <input type="text" name="broj" placeholder="npr. 09/2026" value="<%= filter.broj || '' %>">
   <button type="submit">Pretraži</button>
@@ -34,4 +34,19 @@
     <% if (!rezultati.length) { %><tr><td colspan="6">Nema rezultata — postavi filter iznad.</td></tr><% } %>
   </tbody>
 </table>
+<link rel="stylesheet" href="/public/vendor/flatpickr/flatpickr.min.css">
+<script src="/public/vendor/flatpickr/flatpickr.min.js"></script>
+<script src="/public/vendor/flatpickr/l10n-sr.js"></script>
+<script>
+  document.querySelectorAll('.datepicker').forEach(function (el) {
+    flatpickr(el, {
+      locale: 'sr',
+      dateFormat: 'Y-m-d',
+      altInput: true,
+      altFormat: 'd/m/Y',
+      allowInput: true,
+    });
+  });
+</script>
+
 <%- include('../partials/footer') %>
