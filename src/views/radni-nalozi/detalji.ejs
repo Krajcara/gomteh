@@ -1,5 +1,14 @@
 <%- include('../partials/header') %>
-<h1>Radni nalog br. <%= nalog.broj %></h1>
+
+<div class="page-head">
+  <h1>Radni nalog br. <%= nalog.broj %></h1>
+  <% if (typeof korisnik !== 'undefined' && korisnik && korisnik.uloga === 'administrator') { %>
+    <form method="post" action="/radni-nalozi/<%= nalog.id %>/obrisi"
+          onsubmit="return confirm('OBRISATI radni nalog <%= nalog.broj %>?\n\nOvo trajno briše:\n- <%= uticajBrisanja.brojStavki %> stavki (ukupno dodeljeno <%= uticajBrisanja.ukupnoDodeljeno %> kom., realizovano <%= uticajBrisanja.ukupnoRealizovano %> kom.)\n\nDodeljene količine se oslobađaju — moći će ponovo da se rasporede na novom nalogu.\n\nOVO SE NE MOŽE PONIŠTITI. Nastaviti?');">
+      <button type="submit" style="background:var(--danger); margin:0;">Obriši radni nalog</button>
+    </form>
+  <% } %>
+</div>
 <p><strong>Posao:</strong> <a href="/poslovi/<%= posao.id %>"><%= posao.naziv %></a></p>
 
 <div class="card">

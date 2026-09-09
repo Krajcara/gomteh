@@ -78,7 +78,23 @@ function azurirajRealizovanuKolicinu(stavkaId, kolicinaZavrsena) {
   db.prepare('UPDATE stavka_naloga SET kolicina_zavrsena = ? WHERE id = ?').run(kolicinaZavrsena, stavkaId);
 }
 
+// Šta će nestati ako se radni nalog obriše — za prikaz u upozorenju pre potvrde
+function izracunajUticajBrisanja(radniNalogId) {
+  const stavkeReda = stavke(radniNalogId);
+  const brojStavki = stavkeReda.length;
+  const ukupnoDodeljeno = stavkeReda.reduce((zbir, s) => zbir + s.kolicina_dodeljena, 0);
+  const ukupnoRealizovano = stavkeReda.reduce((zbir, s) => zbir + s.kolicina_zavrsena, 0);
+  return { brojStavki, ukupnoDodeljeno, ukupnoRealizovano };
+}
+
+// Briše radni nalog i njegove stavke (kaskadno). Dodeljene količine se time
+// oslobađaju — deo_iz_plana ponovo postaje "dostupan" za novi radni nalog.
+function obrisi(radniNalogId) {
+  db.prepare('DELETE FROM radni_nalog WHERE id = ?').run(radniNalogId); // kaskadno briše stavka_naloga
+}
+
 module.exports = {
   poId, poPosaoId, stavke, deloviDostupniZaPosao, vecDodeljenoZaDeo,
   proveriKolicinu, kreiraj, azurirajStatus, azurirajRealizovanuKolicinu,
+  izracunajUticajBrisanja, obrisi,
 };

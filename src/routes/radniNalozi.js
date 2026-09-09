@@ -7,7 +7,7 @@ const Posao = require('../models/posao');
 const db = require('../db/db');
 const { generisiRadniNalogPdf } = require('../services/pdfGenerator');
 const path = require('path');
-const { zahtevajLogin, MOZE_NALOGE } = require('../middleware/auth');
+const { zahtevajLogin, MOZE_NALOGE, SAMO_ADMIN } = require('../middleware/auth');
 
 router.use(zahtevajLogin);
 
@@ -113,8 +113,18 @@ router.get('/radni-nalozi/:id', (req, res) => {
 
   const posao = Posao.poId(nalog.posao_id);
   const stavke = RadniNalog.stavke(nalog.id);
+  const uticajBrisanja = RadniNalog.izracunajUticajBrisanja(nalog.id);
 
-  res.render('radni-nalozi/detalji', { nalog, posao, stavke });
+  res.render('radni-nalozi/detalji', { nalog, posao, stavke, uticajBrisanja });
+});
+
+router.post('/radni-nalozi/:id/obrisi', SAMO_ADMIN, (req, res) => {
+  const nalog = RadniNalog.poId(req.params.id);
+  if (!nalog) return res.status(404).render('greska', { poruka: 'Radni nalog nije pronađen.' });
+
+  const posaoId = nalog.posao_id;
+  RadniNalog.obrisi(req.params.id);
+  res.redirect(`/poslovi/${posaoId}`);
 });
 
 router.post('/radni-nalozi/:id/status', MOZE_NALOGE, (req, res) => {
