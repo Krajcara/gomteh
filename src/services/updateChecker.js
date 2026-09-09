@@ -61,6 +61,14 @@ function poslednjiRezultat() {
 function pokreniAzuriranje() {
   const izlaz = [];
   try {
+    // npm install ume da lokalno izmeni package-lock.json (bez ičije akcije).
+    // To bi blokiralo "git pull" ("local changes would be overwritten").
+    // Bezbedno je odbaciti te izmene — tiču se samo praćenih fajlova u repou
+    // (.env, data/, node_modules/ nisu praćeni, njih ovo ne dotiče), i npm
+    // će package-lock.json svakako ponovo generisati u sledećem koraku.
+    izlaz.push('$ git checkout -- .');
+    execSync('git checkout -- .', { cwd: PROJECT_ROOT });
+
     izlaz.push('$ git pull');
     izlaz.push(execSync('git pull', { cwd: PROJECT_ROOT }).toString());
 
