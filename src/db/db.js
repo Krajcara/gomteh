@@ -120,45 +120,72 @@ try {
 }
 
 // SQLite pri "ALTER TABLE ... RENAME" automatski prepravlja definicije stranih ključeva
-// (foreign key) u DRUGIM tabelama da pokazuju na novo ime. Migracija iznad je preimenovala
-// plan_secenja -> plan_secenja_stara (privremeno), pa je deo_iz_plana ostala da referencira
-// baš to privremeno ime — i posle brisanja te privremene tabele, svaki upis u deo_iz_plana
-// (npr. pri uploadu NOVOG plana) pukne sa "no such table: plan_secenja_stara". Ovo je nezavisna
-// provera/popravka koja se pokreće na svakom startu i sama otkloni tu pokvarenu referencu,
-// bilo da je nastala upravo sad ili u nekom ranijem pokretanju pre ove ispravke.
-function popraviFkReferencuDeoIzPlana() {
-  const tabela = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='deo_iz_plana'").get();
-  if (!tabela || !tabela.sql.includes('plan_secenja_stara')) return; // ne postoji ili je već ispravna
+// (foreign key) u DRUGIM tabelama da pokazuju na novo (privremeno) ime. Migracija iznad je
+// preimenovala plan_secenja -> plan_secenja_stara, što je "zarazilo" deo_iz_plana (njena FK
+// definicija je počela da pokazuje na plan_secenja_stara); AKO se deo_iz_plana ikad popravlja
+// istom tehnikom (preimenuj-pa-vrati), to "zarazi" SLEDEĆU tabelu koja nju referencira
+// (stavka_naloga), i tako dalje lančano. Ova funkcija radi opštu proveru: za svaku tabelu u bazi,
+// ako njena sačuvana CREATE TABLE definicija referencira tabelu koja trenutno ne postoji
+// (očigledan trag ovakvog privremenog preimenovanja), tabela se bezbedno rekonstruiše
+// sa ispravnom definicijom iz schema.sql — bez gubitka podataka.
+function popraviPokvareneReferenceSvuda() {
+  const svePostojeceTabele = new Set(
+    db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((r) => r.name)
+  );
 
-  console.log('Popravka baze: deo_iz_plana referencira privremenu tabelu iz migracije — ispravljam...');
+  const definicijeIzSeme = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 
-  db.pragma('foreign_keys = OFF'); // FK se ne može menjati usred transakcije, mora pre nje
-  try {
-    const transakcija = db.transaction(() => {
-      db.exec('ALTER TABLE deo_iz_plana RENAME TO deo_iz_plana_privremeno');
-      db.exec(`
-        CREATE TABLE deo_iz_plana (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          plan_secenja_id INTEGER NOT NULL REFERENCES plan_secenja(id) ON DELETE CASCADE,
-          part_name TEXT NOT NULL,
-          part_size TEXT,
-          kolicina_plan INTEGER NOT NULL
-        )
-      `);
-      db.exec('INSERT INTO deo_iz_plana SELECT * FROM deo_iz_plana_privremeno');
-      db.exec('DROP TABLE deo_iz_plana_privremeno');
-    });
-    transakcija();
-    console.log('Popravka FK reference u deo_iz_plana završena.');
-  } finally {
-    db.pragma('foreign_keys = ON');
+  // Redosled je bitan: prvo tabele koje NIŠTA ne referencira njih (da ne "zarazimo" ništa
+  // dalje kad ih preimenujemo), zato idemo u obrnutom redosledu zavisnosti kad god je poznato.
+  const REDOSLED_PROVERE = [
+    'deo_iz_plana', 'stavka_naloga', 'stavka_ponude', 'uplata',
+    'plan_secenja', 'radni_nalog', 'ponuda', 'posao',
+  ];
+
+  for (const naziv of REDOSLED_PROVERE) {
+    if (!svePostojeceTabele.has(naziv)) continue;
+
+    const tabela = db.prepare('SELECT sql FROM sqlite_master WHERE type=\'table\' AND name = ?').get(naziv);
+    if (!tabela) continue;
+
+    // Izvuci sva imena tabela na koje ova tabela ima REFERENCES i proveri da li stvarno postoje
+    const reference = [...tabela.sql.matchAll(/REFERENCES\s+"?(\w+)"?\s*\(/gi)].map((m) => m[1]);
+    const imaPokvarenu = reference.some((ref) => !svePostojeceTabele.has(ref));
+    if (!imaPokvarenu) continue;
+
+    // Izvuci originalnu (ispravnu) definiciju iz schema.sql da rebuild bude tačno po šemi
+    const regex = new RegExp(`CREATE TABLE IF NOT EXISTS ${naziv} \\([\\s\\S]*?\\n\\);`, 'm');
+    const match = definicijeIzSeme.match(regex);
+    if (!match) {
+      console.error(`Popravka: ne mogu da nađem definiciju za ${naziv} u schema.sql — preskačem.`);
+      continue;
+    }
+    const ispravnaDefinicija = match[0].replace('IF NOT EXISTS ', '');
+
+    console.log(`Popravka baze: ${naziv} referencira nepostojeću tabelu (${reference.join(', ')}) — rekonstruišem...`);
+
+    const privremenoIme = `${naziv}_popravka_privremeno`;
+    db.pragma('foreign_keys = OFF');
+    try {
+      const transakcija = db.transaction(() => {
+        db.exec(`ALTER TABLE ${naziv} RENAME TO ${privremenoIme}`);
+        db.exec(ispravnaDefinicija);
+        db.exec(`INSERT INTO ${naziv} SELECT * FROM ${privremenoIme}`);
+        db.exec(`DROP TABLE ${privremenoIme}`);
+      });
+      transakcija();
+      console.log(`Popravka ${naziv} završena — podaci sačuvani.`);
+    } finally {
+      db.pragma('foreign_keys = ON');
+    }
   }
 }
 
 try {
-  popraviFkReferencuDeoIzPlana();
+  popraviPokvareneReferenceSvuda();
 } catch (e) {
-  console.error('GREŠKA pri popravci deo_iz_plana:', e.message);
+  console.error('GREŠKA pri opštoj popravci referenci:', e.message);
+  console.error(e.stack);
 }
 
 // Primeni šemu (idempotentno — CREATE TABLE IF NOT EXISTS)
