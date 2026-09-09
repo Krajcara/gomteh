@@ -298,74 +298,100 @@ function generisiPonudaPdf(ponudaId) {
   doc.pipe(stream);
   registrujFontove(doc);
 
-  const imaLogo = ubaciLogoAkoPostoji(doc, 40, 30, 90);
-  const zaglavljeX = imaLogo ? 150 : 40;
+  const imaLogo = ubaciLogoAkoPostoji(doc, 40, 30, 80);
+  const firmaX = imaLogo ? 130 : 40;
+
+  // Levo: logo + podaci firme. Desno: podaci komitenta (PRIMALAC). Isti početni Y za oba.
+  const yZaglavlje = 35;
 
   doc.fontSize(10);
   if (firma) {
-    doc.text(firma.naziv || '', zaglavljeX, 35);
-    doc.text(`${firma.mesto || ''}, ${firma.adresa || ''}`);
-    if (firma.email) doc.text(`email: ${firma.email}`);
-    if (firma.tekuci_racun) doc.text(`tekući račun: ${firma.tekuci_racun}`);
-    if (firma.maticni_broj) doc.text(`MB: ${firma.maticni_broj}`);
-    if (firma.pib) doc.text(`PIB: ${firma.pib}`);
-    if (firma.sifra_delatnosti) doc.text(`šifra delatnosti: ${firma.sifra_delatnosti}`);
+    doc.text(firma.naziv || '', firmaX, yZaglavlje, { width: 220 });
+    doc.text(`${firma.mesto || ''}, ${firma.adresa || ''}`, { width: 220 });
+    if (firma.email) doc.text(`email: ${firma.email}`, { width: 220 });
+    if (firma.tekuci_racun) doc.text(`tekući račun: ${firma.tekuci_racun}`, { width: 220 });
+    if (firma.maticni_broj) doc.text(`MB: ${firma.maticni_broj}`, { width: 220 });
+    if (firma.pib) doc.text(`PIB: ${firma.pib}`, { width: 220 });
+    if (firma.sifra_delatnosti) doc.text(`šifra delatnosti: ${firma.sifra_delatnosti}`, { width: 220 });
   }
+  const yPoslePodatakaFirme = doc.y;
 
-  doc.moveDown(2);
-  // Dvokolonski raspored: "Primio" + datum levo, "Sastavio" + ime desno
+  doc.font('Bold').fontSize(10).text('PRIMALAC:', 340, yZaglavlje, { width: 200 });
+  doc.font('Regular').text(komitent.naziv, 340, doc.y, { width: 200 });
+  if (komitent.kontakt_osoba) doc.text(`N/r ${komitent.kontakt_osoba}`, 340, doc.y, { width: 200 });
+  if (komitent.adresa) doc.text(komitent.adresa, 340, doc.y, { width: 200 });
+  if (komitent.kontakt_telefon) doc.text(`tel. ${komitent.kontakt_telefon}`, 340, doc.y, { width: 200 });
+  if (komitent.mesto) doc.text(komitent.mesto, 340, doc.y, { width: 200 });
+  const yPoslePrimaoca = doc.y;
+
+  doc.y = Math.max(yPoslePodatakaFirme, yPoslePrimaoca) + 20;
+  doc.x = 40;
+
+  // Naslov ponude — centriran, na sredini strane
+  doc.font('Bold').fontSize(15).text(`Ponuda br. ${ponuda.broj}`, 40, doc.y, { width: 515, align: 'center' });
+  doc.font('Regular');
+  doc.moveDown();
+
+  // Primio/Sastavio — manjim slovima, ispod naslova
   const yPrimio = doc.y;
-  doc.fontSize(10).text(`Primio: ${ponuda.primio_mesto || ''}`, 40, yPrimio, { width: 250 });
+  doc.fontSize(9).fillColor('#555555');
+  doc.text(`Primio: ${ponuda.primio_mesto || ''}`, 40, yPrimio, { width: 250 });
   doc.text(new Date(ponuda.datum).toLocaleDateString('sr-RS'), 40, doc.y, { width: 250 });
   doc.text('Sastavio:', 300, yPrimio, { width: 200 });
   doc.text(sastavio ? sastavio.ime : '', 300, yPrimio + doc.currentLineHeight(), { width: 200 });
+  doc.fillColor('#000000');
 
   doc.y = yPrimio + doc.currentLineHeight() * 2;
   doc.x = 40;
-
   doc.moveDown();
-  doc.font('Bold').fontSize(11).text('PRIMALAC:');
-  doc.font('Regular').fontSize(10).text(komitent.naziv);
-  if (komitent.kontakt_osoba) doc.text(`N/r ${komitent.kontakt_osoba}`);
-  if (komitent.adresa) doc.text(komitent.adresa);
-  if (komitent.kontakt_telefon) doc.text(`tel. ${komitent.kontakt_telefon}`);
-  if (komitent.mesto) doc.text(komitent.mesto);
 
-  doc.moveDown();
-  doc.font('Bold').fontSize(13).text(`Ponuda br. ${ponuda.broj}`);
-  doc.font('Regular');
   if (ponuda.naslov_posla) {
-    doc.moveDown(0.5);
-    doc.fontSize(11).text(ponuda.naslov_posla);
+    doc.font('Bold').fontSize(11).text(ponuda.naslov_posla, { align: 'center' });
+    doc.font('Regular');
+    doc.moveDown();
   }
 
   if (ponuda.propratni_tekst) {
-    doc.moveDown();
     doc.fontSize(10).text(ponuda.propratni_tekst);
+    doc.moveDown();
   }
   if (ponuda.tehnicki_opis) {
-    doc.moveDown();
     doc.font('Bold').fontSize(11).text('Tehnički opis:');
     doc.font('Regular').fontSize(10).text(ponuda.tehnicki_opis);
+    doc.moveDown();
   }
   if (ponuda.rok_isporuke) {
-    doc.moveDown();
     doc.fontSize(10).text(`Rok isporuke: ${ponuda.rok_isporuke}`);
+    doc.moveDown();
   }
 
-  doc.moveDown();
-  doc.font('Bold').fontSize(11).text('Cena:');
-  doc.font('Regular').fontSize(10);
+  // Tabelarni prikaz usluga i cena
+  const sivaPozadina = '#e8e8e8';
+  let yTabela = doc.y;
+  yTabela = nacrtajTabelu(doc, 40, yTabela, [[
+    { tekst: 'Opis usluge', sirina: 380, bold: true, pozadina: sivaPozadina, velicina: 9.5 },
+    { tekst: 'Cena', sirina: 135, bold: true, pozadina: sivaPozadina, align: 'right', velicina: 9.5 },
+  ]], 20);
+
   stavke.forEach((s) => {
-    doc.text(`${s.opis}    ${s.iznos.toLocaleString('sr-RS')} din`);
+    yTabela = nacrtajTabelu(doc, 40, yTabela, [[
+      { tekst: s.opis, sirina: 380, velicina: 9.5 },
+      { tekst: `${s.iznos.toLocaleString('sr-RS')} din`, sirina: 135, align: 'right', velicina: 9.5 },
+    ]], 20);
   });
-  doc.moveDown(0.5);
-  doc.font('Bold').fontSize(11).text(`Ukupno: ${(ponuda.ukupno || 0).toLocaleString('sr-RS')} din`);
+
+  yTabela = nacrtajTabelu(doc, 40, yTabela, [[
+    { tekst: 'Ukupno', sirina: 380, bold: true, pozadina: sivaPozadina, velicina: 10 },
+    { tekst: `${(ponuda.ukupno || 0).toLocaleString('sr-RS')} din`, sirina: 135, bold: true, pozadina: sivaPozadina, align: 'right', velicina: 10 },
+  ]], 22);
+
+  doc.y = yTabela + 14;
+  doc.x = 40;
   doc.font('Regular');
 
-  if (ponuda.placanje) { doc.moveDown(); doc.fontSize(10).text(`Plaćanje: ${ponuda.placanje}`); }
-  if (ponuda.garancija) { doc.fontSize(10).text(`Garancija: ${ponuda.garancija}`); }
-  if (ponuda.napomena) { doc.moveDown(); doc.fontSize(9).text(`NAPOMENA: ${ponuda.napomena}`); }
+  if (ponuda.placanje) { doc.fontSize(10).text(`Plaćanje: ${ponuda.placanje}`); doc.moveDown(0.3); }
+  if (ponuda.garancija) { doc.fontSize(10).text(`Garancija: ${ponuda.garancija}`); doc.moveDown(0.3); }
+  if (ponuda.napomena) { doc.moveDown(0.3); doc.fontSize(9).text(`NAPOMENA: ${ponuda.napomena}`); }
   if (ponuda.rok_vazenja) { doc.fontSize(9).text(`Rok važenja ponude je ${ponuda.rok_vazenja}`); }
 
   // "Strana X od Y" — dodaje se sad na svaku stranu, pošto tek sad znamo ukupan broj strana
