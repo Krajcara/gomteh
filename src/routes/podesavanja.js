@@ -7,6 +7,7 @@ const fs = require('fs');
 const Firma = require('../models/firma');
 const db = require('../db/db');
 const updateChecker = require('../services/updateChecker');
+const { brojIzForme } = require('../utils');
 const { SAMO_ADMIN } = require('../middleware/auth');
 
 const upload = multer({
@@ -60,17 +61,17 @@ router.post('/firma/logo', (req, res) => {
 // Obračun — cena/kg i procenat rada
 router.post('/obracun', (req, res) => {
   const { cenaPoKg, procenatRada } = req.body;
-  const procenat = Math.min(25, Math.max(20, parseFloat(procenatRada)));
+  const procenat = Math.min(25, Math.max(20, brojIzForme(procenatRada)));
 
   const postoji = db.prepare('SELECT 1 FROM podesavanja WHERE id = 1').get();
   if (postoji) {
     db.prepare('UPDATE podesavanja SET cena_po_kg = ?, procenat_rada = ? WHERE id = 1').run(
-      parseFloat(cenaPoKg),
+      brojIzForme(cenaPoKg),
       procenat
     );
   } else {
     db.prepare('INSERT INTO podesavanja (id, cena_po_kg, procenat_rada) VALUES (1, ?, ?)').run(
-      parseFloat(cenaPoKg),
+      brojIzForme(cenaPoKg),
       procenat
     );
   }
@@ -83,7 +84,7 @@ router.post('/cena-po-debljini', (req, res) => {
   db.prepare(
     `INSERT INTO cena_po_debljini (debljina_mm, cena_po_m) VALUES (?, ?)
      ON CONFLICT(debljina_mm) DO UPDATE SET cena_po_m = excluded.cena_po_m`
-  ).run(parseFloat(debljinaMm), parseFloat(cenaPoM));
+  ).run(brojIzForme(debljinaMm), brojIzForme(cenaPoM));
   res.redirect('/podesavanja#cene');
 });
 

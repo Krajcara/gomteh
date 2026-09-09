@@ -45,7 +45,7 @@
   <h2 style="font-size:16px;">Obračun — materijal i rad</h2>
   <form method="post" action="/podesavanja/obracun">
     <label>Cena materijala po kg (RSD)</label>
-    <input type="number" step="0.01" name="cenaPoKg" value="<%= podesavanja ? podesavanja.cena_po_kg : '' %>">
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" name="cenaPoKg" value="<%= podesavanja ? podesavanja.cena_po_kg : '' %>">
     <label>Procenat rada (20–25%)</label>
     <input type="number" step="0.1" min="20" max="25" name="procenatRada" value="<%= podesavanja ? podesavanja.procenat_rada : 22.5 %>">
     <button type="submit">Sačuvaj</button>
@@ -73,9 +73,9 @@
 
   <form method="post" action="/podesavanja/cena-po-debljini" style="margin-top:16px;">
     <label>Debljina (mm)</label>
-    <input type="number" step="0.1" name="debljinaMm" required>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 1,5" name="debljinaMm" required>
     <label>Cena po m (RSD)</label>
-    <input type="number" step="0.01" name="cenaPoM" required>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 250" name="cenaPoM" required>
     <button type="submit">Dodaj / ažuriraj</button>
   </form>
 </div>

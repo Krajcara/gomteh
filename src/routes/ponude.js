@@ -10,6 +10,7 @@ const Komitent = require('../models/komitent');
 const Uplata = require('../models/uplata');
 const PlanSecenja = require('../models/planSecenja');
 const { generisiPonudaPdf } = require('../services/pdfGenerator');
+const { brojIzForme } = require('../utils');
 const { zahtevajLogin, MOZE_PONUDE, SAMO_ADMIN } = require('../middleware/auth');
 
 const ODBIJANJE_DIR = path.join(__dirname, '../../data/uploads/odbijanja');
@@ -109,7 +110,7 @@ router.post('/ponude/:id/obrisi', SAMO_ADMIN, (req, res) => {
 
 // Ručno dodavanje stavke
 router.post('/ponude/:id/stavke', MOZE_PONUDE, (req, res) => {
-  Ponuda.dodajStavku(req.params.id, { opis: req.body.opis, iznos: parseFloat(req.body.iznos) });
+  Ponuda.dodajStavku(req.params.id, { opis: req.body.opis, iznos: brojIzForme(req.body.iznos) });
   res.redirect(`/ponude/${req.params.id}`);
 });
 
@@ -184,7 +185,7 @@ router.get('/ponude/:id/dokument-odbijanja', (req, res) => {
 // Uplate — samo za prihvaćene ponude
 router.post('/ponude/:id/uplate', MOZE_PONUDE, (req, res) => {
   Uplata.dodaj(req.params.id, {
-    iznos: parseFloat(req.body.iznos),
+    iznos: brojIzForme(req.body.iznos),
     napomena: req.body.napomena,
     korisnikId: req.session.korisnik.id,
   });

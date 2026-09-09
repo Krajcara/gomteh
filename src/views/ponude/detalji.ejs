@@ -139,7 +139,7 @@
     <label>Opis stavke</label>
     <input type="text" name="opis" required>
     <label>Iznos (RSD)</label>
-    <input type="number" step="0.01" name="iznos" required>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 1228,68" name="iznos" required>
     <button type="submit">Dodaj stavku</button>
   </form>
 </div>
@@ -184,7 +184,7 @@
 
   <form method="post" action="/ponude/<%= ponuda.id %>/uplate" style="margin-top:16px;">
     <label>Iznos uplate (RSD)</label>
-    <input type="number" step="0.01" name="iznos" required>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 1228,68" name="iznos" required>
     <label>Napomena (opciono)</label>
     <input type="text" name="napomena" placeholder="npr. avans, gotovina, račun br...">
     <button type="submit">Evidentiraj uplatu</button>
