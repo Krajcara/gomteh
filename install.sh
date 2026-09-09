@@ -34,6 +34,9 @@ if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
 
     echo "Instaliram alate za kompajliranje (potrebni ako neki npm paket nema gotovu binarnu verziju)..."
     sudo apt-get install -y build-essential python3
+
+    echo "Instaliram poppler-utils (potreban za obradu PDF planova sečenja)..."
+    sudo apt-get install -y poppler-utils
   else
     echo "Automatska instalacija Node.js-a je podržana samo na Debian/Ubuntu (apt)."
     echo "Instaliraj Node.js 20+ ručno (https://nodejs.org) pa ponovo pokreni ovu skriptu."

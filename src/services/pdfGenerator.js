@@ -1,10 +1,15 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+const sharp = require('sharp');
 const db = require('../db/db');
+const { parsirajPlanSecenja } = require('./pdfParser');
 
 const OUTPUT_DIR = path.join(__dirname, '../../data/generated');
+const TEMP_DIR = path.join(__dirname, '../../data/temp');
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+fs.mkdirSync(TEMP_DIR, { recursive: true });
 
 // DejaVu Sans podržava srpsku latinicu (č, ć, š, ž, đ) — PDFKit-ov podrazumevani
 // Helvetica font (WinAnsiEncoding) NE podržava č, ć i đ, pa bi ta slova bila iskrivljena.
@@ -31,41 +36,236 @@ function ubaciLogoAkoPostoji(doc, x, y, sirina) {
   return false;
 }
 
-// Prevedeni plan sečenja — pojednostavljen prikaz izvučenih podataka na srpskom,
-// sa logom firme i nazivom komitenta umesto originalnog "Customer Name" polja.
-function generisiPrevedeniPlan(planSecenjaId) {
+// Izvlači dijagram raspireda delova sa DRUGE strane originalnog AJAN PDF-a kao sliku
+// (fiksna pozicija na stranici, isti template za svaki izveštaj — vidi napomenu ispod).
+// Vraća putanju do isečene PNG slike, ili null ako izvlačenje ne uspe (npr. plan bez 2. strane).
+function izvuciDijagramSlike(originalniFajlPutanja, izlazniPrefiks) {
+  try {
+    const DPI = 200;
+    const renderPrefiks = path.join(TEMP_DIR, izlazniPrefiks);
+    execSync(
+      `pdftoppm -png -r ${DPI} -f 2 -l 2 "${originalniFajlPutanja}" "${renderPrefiks}"`,
+      { stdio: 'pipe' }
+    );
+
+    const renderovanaSlika = `${renderPrefiks}-2.png`;
+    if (!fs.existsSync(renderovanaSlika)) return null;
+
+    // Koordinate su izmerene na stvarnom AJAN PDF-u (A4, fiksan MigraDoc template —
+    // ista relativna pozicija dijagrama bez obzira na sadržaj konkretnog posla)
+    const ptToPx = DPI / 72;
+    const top = Math.round(88 * ptToPx);
+    const bottom = Math.round(352 * ptToPx);
+    const left = Math.round(10 * ptToPx);
+    const right = Math.round(585 * ptToPx);
+
+    const izlaznaPutanja = path.join(TEMP_DIR, `${izlazniPrefiks}-dijagram.png`);
+
+    return { renderovanaSlika, izlaznaPutanja, left, top, sirina: right - left, visina: bottom - top };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function izvuciDijagramSlikeAsync(originalniFajlPutanja, izlazniPrefiks) {
+  const info = izvuciDijagramSlike(originalniFajlPutanja, izlazniPrefiks);
+  if (!info) return null;
+
+  try {
+    await sharp(info.renderovanaSlika)
+      .extract({ left: info.left, top: info.top, width: info.sirina, height: info.visina })
+      .toFile(info.izlaznaPutanja);
+    return info.izlaznaPutanja;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Jednostavna tabela: crta re='divove' oko svake ćelije. Redovi su niz ćelija
+// [{ tekst, sirina, bold }], sve ćelije u redu dele istu visinu.
+function nacrtajTabelu(doc, x, y, redovi, visinaReda = 20) {
+  let trenutnoY = y;
+  for (const red of redovi) {
+    let trenutnoX = x;
+    const maxSirina = red.reduce((z, c) => z + c.sirina, 0);
+    doc.lineWidth(0.5).rect(x, trenutnoY, maxSirina, visinaReda).stroke('#999999');
+    for (const celija of red) {
+      doc.rect(trenutnoX, trenutnoY, celija.sirina, visinaReda).stroke('#999999');
+      if (celija.pozadina) {
+        doc.save().rect(trenutnoX, trenutnoY, celija.sirina, visinaReda).fill(celija.pozadina).restore();
+      }
+      doc.font(celija.bold ? 'Bold' : 'Regular').fontSize(celija.velicina || 8.5).fillColor('#000000');
+      doc.text(celija.tekst ?? '', trenutnoX + 4, trenutnoY + visinaReda / 2 - 5, {
+        width: celija.sirina - 8,
+        align: celija.align || 'left',
+      });
+      trenutnoX += celija.sirina;
+    }
+    trenutnoY += visinaReda;
+  }
+  return trenutnoY;
+}
+
+// Prevedeni plan sečenja — vernu strukturu originala (zaglavlje, dijagram, tabela delova),
+// prevedene labele na srpski, logo firme umesto AJAN loga, i naziv komitenta iz posla
+// umesto originalnog "Customer Name" polja.
+async function generisiPrevedeniPlan(planSecenjaId) {
   const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
   if (!plan) throw new Error('Plan sečenja nije pronađen.');
 
-  const ponuda = db.prepare('SELECT * FROM ponuda WHERE id = ?').get(plan.ponuda_id);
-  const posao = db.prepare('SELECT * FROM posao WHERE id = ?').get(ponuda.posao_id);
+  const posao = db.prepare('SELECT * FROM posao WHERE id = ?').get(plan.posao_id);
   const komitent = db.prepare('SELECT * FROM komitent WHERE id = ?').get(posao.komitent_id);
   const delovi = db.prepare('SELECT * FROM deo_iz_plana WHERE plan_secenja_id = ?').all(planSecenjaId);
 
+  // Ponovo parsiramo originalni fajl da dobijemo i dodatna polja (mašina, dimenzije table,
+  // amperaža...) bez potrebe da ih trajno čuvamo u bazi.
+  let prosireno = {};
+  try {
+    prosireno = await parsirajPlanSecenja(plan.originalni_fajl_putanja);
+  } catch (e) {
+    prosireno = {};
+  }
+
+  const dijagramPutanja = await izvuciDijagramSlikeAsync(plan.originalni_fajl_putanja, `plan-${planSecenjaId}`);
+
   const izlazPutanja = path.join(OUTPUT_DIR, `plan-secenja-${planSecenjaId}.pdf`);
-  const doc = new PDFDocument({ margin: 40 });
+  const doc = new PDFDocument({ margin: 30, size: 'A4' });
   const stream = fs.createWriteStream(izlazPutanja);
   doc.pipe(stream);
   registrujFontove(doc);
 
-  const imaLogo = ubaciLogoAkoPostoji(doc, 40, 30, 100);
-  doc.font('Bold').fontSize(16).text('Plan sečenja — prevod', imaLogo ? 160 : 40, 40);
-  doc.font('Regular');
+  const imaLogo = ubaciLogoAkoPostoji(doc, 30, 20, 90);
+  doc.font('Bold').fontSize(14).text('Plan sečenja', imaLogo ? 130 : 30, 25);
+  doc.font('Regular').fontSize(8).fillColor('#555555')
+    .text(new Date().toLocaleDateString('sr-RS'), 450, 25, { width: 115, align: 'right' });
+  doc.fillColor('#000000');
 
-  doc.moveDown(imaLogo ? 2 : 1);
-  doc.fontSize(11);
-  doc.text(`Naziv kupca: ${komitent.naziv}`); // Customer Name -> naziv komitenta iz posla
-  doc.text(`Naziv fajla: ${plan.naziv_fajla || '—'}`);
-  doc.text(`Materijal: ${plan.materijal || '—'}`);
-  doc.text(`Debljina (mm): ${plan.debljina_mm ?? '—'}`);
-  doc.moveDown();
-  doc.text(`Ukupna težina delova (kg): ${plan.tezina_delova_kg ?? '—'}`);
-  doc.text(`Ukupna dužina reza (mm): ${plan.duzina_reza_mm ?? '—'}`);
-  doc.moveDown();
+  let y = 70;
+  const sivaPozadina = '#e8e8e8';
+  const punaSirina = 535;
 
-  doc.fontSize(13).text('Lista delova', { underline: true });
-  doc.fontSize(11);  delovi.forEach((d) => {
-    doc.text(`${d.part_name}   ${d.part_size || ''}   količina: ${d.kolicina_plan}`);
+  // Red 1: Naziv kupca | Tip mašine | Naziv fajla
+  y = nacrtajTabelu(doc, 30, y, [[
+    { tekst: 'Naziv kupca', sirina: 90, bold: true, pozadina: sivaPozadina },
+    { tekst: komitent.naziv, sirina: 165 },
+    { tekst: 'Tip mašine', sirina: 80, bold: true, pozadina: sivaPozadina },
+    { tekst: prosireno.masina || '—', sirina: 60 },
+    { tekst: 'Naziv fajla', sirina: 70, bold: true, pozadina: sivaPozadina },
+    { tekst: plan.naziv_fajla || '—', sirina: 70 },
+  ]]);
+
+  // Red 2: Dimenzije table | Broj ploče | Debljina | Amperaža | Materijal
+  y = nacrtajTabelu(doc, 30, y, [[
+    { tekst: 'Dimenzije table', sirina: 80, bold: true, pozadina: sivaPozadina, velicina: 8 },
+    { tekst: prosireno.dimenzijeTable || '—', sirina: 85, velicina: 8 },
+    { tekst: 'Br. ploče', sirina: 50, bold: true, pozadina: sivaPozadina, velicina: 8 },
+    { tekst: prosireno.brojPloce || '—', sirina: 25, align: 'center', velicina: 8 },
+    { tekst: 'Debljina', sirina: 55, bold: true, pozadina: sivaPozadina, velicina: 8 },
+    { tekst: String(plan.debljina_mm ?? '—'), sirina: 35, align: 'center', velicina: 8 },
+    { tekst: 'Amper.', sirina: 45, bold: true, pozadina: sivaPozadina, velicina: 8 },
+    { tekst: prosireno.amperaza || '—', sirina: 30, align: 'center', velicina: 8 },
+    { tekst: 'Materijal', sirina: 50, bold: true, pozadina: sivaPozadina, velicina: 8 },
+    { tekst: plan.materijal || '—', sirina: 80, velicina: 8 },
+  ]]);
+
+  y += 10;
+
+  // Dijagram (izvučen iz originalnog PDF-a kao slika)
+  if (dijagramPutanja && fs.existsSync(dijagramPutanja)) {
+    try {
+      const dimenzije = await sharp(dijagramPutanja).metadata();
+      const razmera = punaSirina / dimenzije.width;
+      const visinaSlike = dimenzije.height * razmera;
+      doc.image(dijagramPutanja, 30, y, { width: punaSirina });
+      y += visinaSlike + 12;
+    } catch (e) {
+      doc.fontSize(9).fillColor('#888888').text('(dijagram nije dostupan)', 30, y);
+      y += 20;
+    }
+  } else {
+    doc.fontSize(9).fillColor('#888888').text('(dijagram nije dostupan za ovaj plan)', 30, y);
+    y += 20;
+  }
+  doc.fillColor('#000000');
+
+  // Ako nema dovoljno mesta do kraja strane za tabelu sažetka + delova, pređi na novu stranu
+  if (y > 620) {
+    doc.addPage();
+    y = 30;
+  }
+
+  // Sažetak — dve kolone kao u originalu
+  const sazetakLevo = [
+    ['Ukupno iskorišćenih tabli', prosireno.ukupnoTabli ?? '—'],
+    ['Ukupno vreme sečenja', prosireno.ukupnoVremeSecenja ?? '—'],
+  ];
+  const sazetakDesno = [
+    ['Broj probadanja', prosireno.ukupnoProbadanja ?? '—'],
+    ['Ukupna težina delova (kg)', plan.tezina_delova_kg ?? '—'],
+    ['Težina table (kg)', prosireno.tezinaTable ?? '—'],
+    ['Otpadni metal (kg)', prosireno.tezinaOtpada ?? '—'],
+    ['Table za ponovnu upotrebu (kg)', prosireno.tezinaZaPonovnuUpotrebu ?? '—'],
+    ['Ukupna dužina reza (mm)', plan.duzina_reza_mm ?? '—'],
+  ];
+
+  const pocetakSazetkaY = y;
+  let yLevo = y;
+  for (const [labela, vrednost] of sazetakLevo) {
+    yLevo = nacrtajTabelu(doc, 30, yLevo, [[
+      { tekst: labela, sirina: 160, bold: true, pozadina: sivaPozadina },
+      { tekst: String(vrednost), sirina: 100 },
+    ]], 18);
+  }
+
+  let yDesno = pocetakSazetkaY;
+  for (const [labela, vrednost] of sazetakDesno) {
+    yDesno = nacrtajTabelu(doc, 300, yDesno, [[
+      { tekst: labela, sirina: 175, bold: true, pozadina: sivaPozadina },
+      { tekst: String(vrednost), sirina: 90 },
+    ]], 18);
+  }
+
+  y = Math.max(yLevo, yDesno) + 14;
+
+  if (y > 680) {
+    doc.addPage();
+    y = 30;
+  }
+
+  // Tabela delova (prevedena zaglavlja)
+  doc.font('Bold').fontSize(11).text('Lista delova', 30, y);
+  y += 18;
+
+  const koloneDelova = [
+    { naslov: 'Br.', sirina: 30 },
+    { naslov: 'Naziv dela', sirina: 90 },
+    { naslov: 'Dimenzije', sirina: 90 },
+    { naslov: 'Težina (kg)', sirina: 65 },
+    { naslov: 'Količina', sirina: 55 },
+    { naslov: 'Obim (mm)', sirina: 70 },
+    { naslov: 'Napomena', sirina: 135 },
+  ];
+
+  y = nacrtajTabelu(doc, 30, y, [
+    koloneDelova.map((k) => ({ tekst: k.naslov, sirina: k.sirina, bold: true, pozadina: sivaPozadina, align: 'center' })),
+  ], 20);
+
+  delovi.forEach((d, i) => {
+    const izvorniDeo = (prosireno.delovi || []).find((p) => p.partName === d.part_name);
+    y = nacrtajTabelu(doc, 30, y, [[
+      { tekst: String(i + 1), sirina: 30, align: 'center' },
+      { tekst: d.part_name, sirina: 90 },
+      { tekst: d.part_size || '—', sirina: 90, align: 'center' },
+      { tekst: izvorniDeo ? String(izvorniDeo.tezinaKg) : '—', sirina: 65, align: 'center' },
+      { tekst: String(d.kolicina_plan), sirina: 55, align: 'center' },
+      { tekst: izvorniDeo ? String(izvorniDeo.obimMm) : '—', sirina: 70, align: 'center' },
+      { tekst: '', sirina: 135 },
+    ]], 20);
+
+    if (y > 780 && i < delovi.length - 1) {
+      doc.addPage();
+      y = 30;
+    }
   });
 
   doc.end();

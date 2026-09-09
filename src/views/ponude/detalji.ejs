@@ -29,15 +29,10 @@
 <% } %>
 
 <div class="card">
-  <h2 style="font-size:16px;">Plan sečenja (opciono)</h2>
-  <form method="post" action="/ponude/<%= ponuda.id %>/plan-secenja" enctype="multipart/form-data">
-    <label>Upload AJAN plana sečenja (PDF)</label>
-    <input type="file" name="plan" accept=".pdf" required>
-    <button type="submit">Obradi plan</button>
-  </form>
+  <h2 style="font-size:16px;">Planovi sečenja povezani sa ovom ponudom</h2>
 
   <% planovi.forEach(p => { %>
-    <div style="border-top:1px solid #ddd; margin-top:14px; padding-top:10px;">
+    <div style="border-top:1px solid var(--border); margin-top:14px; padding-top:10px;">
       <p><strong><%= p.naziv_fajla %></strong> — <%= p.materijal %>, debljina <%= p.debljina_mm %>mm</p>
       <p>Težina delova: <%= p.tezina_delova_kg %> kg · Dužina reza: <%= p.duzina_reza_mm %> mm</p>
       <p>
@@ -59,10 +54,29 @@
             Osveži obračun
           </button>
         </form>
+        <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/otkaci" style="display:inline;">
+          <button type="submit" style="background:var(--bg-elevated-2); color:var(--text);" title="Vraća plan u dostupne za druge ponude">
+            Otkači sa ove ponude
+          </button>
+        </form>
       <% } %>
       <a href="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/preuzmi">Preuzmi prevedeni plan (PDF)</a>
     </div>
   <% }) %>
+  <% if (!planovi.length) { %><p style="color:var(--text-muted);">Nijedan plan sečenja nije povezan sa ovom ponudom.</p><% } %>
+
+  <% if (dostupniPlanovi.length) { %>
+    <form method="post" action="/ponude/<%= ponuda.id %>/planovi/poveznica" style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+      <label>Poveži dodatni (već uploadovan) plan sečenja sa ovog posla</label>
+      <% dostupniPlanovi.forEach(p => { %>
+        <label style="display:flex; align-items:center; gap:8px; font-weight:400; margin-top:6px;">
+          <input type="checkbox" name="planId" value="<%= p.id %>" style="width:auto; margin:0;">
+          <%= p.naziv_fajla || 'plan #' + p.id %> — <%= p.materijal || '' %> (<%= p.debljina_mm ?? '?' %>mm)
+        </label>
+      <% }) %>
+      <button type="submit">Poveži izabrane</button>
+    </form>
+  <% } %>
 </div>
 
 <div class="card">

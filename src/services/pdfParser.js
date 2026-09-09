@@ -86,6 +86,19 @@ async function parsirajPlanSecenja(putanjaDoFajla) {
   // Naziv fajla — sve do sledeće poznate labele (Sheet Size) ili kraja linije
   const nazivFajla = izvuci(/File Name\s+(.+?)(?:\s+Sheet Size|\n)/i);
 
+  // Dodatna polja iz zaglavlja (za verniji prikaz u prevedenom dokumentu)
+  const masina = izvuci(/Machine Type\s+(\S+)/i);
+  const dimenzijeTable = izvuci(/Sheet Size\s+(\S+\s*X\s*\S+\s*mm)/i);
+  const amperaza = izvuci(/Amperage\s+(\S+)/i);
+  const brojPloce = izvuci(/Repeat\s*\(Sheet No\)\s+(\S+)/i);
+
+  const ukupnoTabli = izvuci(/Total Number Of Used Sheets\s*=\s*(\d+)/i);
+  const ukupnoProbadanja = izvuci(/Total Piercing(?:\s*Quantity)?\s*=\s*(\d+)/i);
+  const ukupnoVremeSecenja = izvuci(/Total Cutting Time\s*=\s*([\d:]+)/i);
+  const tezinaTable = parseFloat(izvuci(/Total Sheet Weight\s*\(Kg\)\s*=\s*([\d.]+)/i));
+  const tezinaOtpada = parseFloat(izvuci(/Total Scrap Metal Weight\s*\(Kg\)\s*=\s*([\d.]+)/i));
+  const tezinaZaPonovnuUpotrebu = parseFloat(izvuci(/Total Reusable Sheet Weight\s*\(Kg\)\s*=\s*([\d.]+)/i));
+
   // Lista delova: red oblika "1 1001 951X311 1.949 0:01:45 2 3311.09"
   const deloviRegex = /^(\d+)\s+(\d{3,5})\s+(\d+X\d+)\s+([\d.]+)\s+\d+:\d{2}:\d{2}\s+(\d+)\s+([\d.]+)\s*$/gm;
   const delovi = [];
@@ -107,6 +120,16 @@ async function parsirajPlanSecenja(putanjaDoFajla) {
     debljinaMm: debljina,
     materijal,
     nazivFajla,
+    masina,
+    dimenzijeTable,
+    amperaza,
+    brojPloce,
+    ukupnoTabli,
+    ukupnoProbadanja,
+    ukupnoVremeSecenja,
+    tezinaTable,
+    tezinaOtpada,
+    tezinaZaPonovnuUpotrebu,
     delovi,
   };
 }

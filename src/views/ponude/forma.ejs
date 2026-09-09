@@ -1,11 +1,28 @@
 <%- include('../partials/header') %>
 <h1>Nova ponuda — <%= posao.naziv %></h1>
 <p style="color:var(--text-muted); font-size:13px;">
-  Sva polja ispod su opciona i mogu se dopuniti kasnije. Posle čuvanja, na stranici ponude ćeš moći da
-  uploaduješ plan sečenja (ako posao ima sečenje) i dodaš stavke cene.
+  Sva polja ispod su opciona i mogu se dopuniti kasnije.
 </p>
 
 <form class="card" method="post" action="/poslovi/<%= posao.id %>/ponude">
+  <% if (dostupniPlanovi.length) { %>
+    <label>Koji plan(ove) sečenja koristi ova ponuda?</label>
+    <div style="border:1px solid var(--border); border-radius:7px; padding:10px; margin-top:5px;">
+      <% dostupniPlanovi.forEach(p => { %>
+        <label style="display:flex; align-items:center; gap:8px; font-weight:400; margin-top:6px;">
+          <input type="checkbox" name="planoviIds" value="<%= p.id %>" style="width:auto; margin:0;">
+          <%= p.naziv_fajla || 'plan #' + p.id %> — <%= p.materijal || '' %> (<%= p.debljina_mm ?? '?' %>mm),
+          težina <%= p.tezina_delova_kg ?? '?' %> kg
+        </label>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p style="color:var(--text-muted); font-size:13px; border:1px dashed var(--border); border-radius:7px; padding:10px;">
+      Nema dostupnih (nepovezanih) planova sečenja za ovaj posao. Ako posao ima sečenje, prvo ga
+      uploaduj na stranici posla, ili nastavi bez njega — plan možeš povezati sa ovom ponudom i kasnije.
+    </p>
+  <% } %>
+
   <label>Primio (mesto)</label>
   <input type="text" name="primioMesto">
 

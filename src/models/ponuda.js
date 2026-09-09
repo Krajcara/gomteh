@@ -15,14 +15,6 @@ function stavke(ponudaId) {
     .all(ponudaId);
 }
 
-function planoviSecenja(ponudaId) {
-  return db.prepare('SELECT * FROM plan_secenja WHERE ponuda_id = ? ORDER BY kreiran_at').all(ponudaId);
-}
-
-function delovi(planSecenjaId) {
-  return db.prepare('SELECT * FROM deo_iz_plana WHERE plan_secenja_id = ?').all(planSecenjaId);
-}
-
 function kreiraj({ posaoId, sastavioKorisnikId, primioMesto, naslovPosla, propratniTekst, tehnickiOpis, rokIsporuke, placanje, garancija, napomena, rokVazenja }, jeAutomatskaZaVisak = false) {
   const broj = sledeciBrojPonude();
   const rezultat = db
@@ -56,35 +48,11 @@ function preracunajUkupno(ponudaId) {
   return zbir;
 }
 
-function sacuvajPlanSecenja(ponudaId, podaci) {
-  const rezultat = db
-    .prepare(
-      `INSERT INTO plan_secenja
-        (ponuda_id, originalni_fajl_putanja, preveden_fajl_putanja, naziv_fajla, materijal,
-         debljina_mm, tezina_delova_kg, duzina_reza_mm, metod_1_iznos, metod_2_iznos)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      ponudaId, podaci.originalnaPutanja, podaci.prevedenaPutanja, podaci.nazivFajla,
-      podaci.materijal, podaci.debljinaMm, podaci.tezinaDelovaKg, podaci.duzinaRezaMm,
-      podaci.metod1Iznos, podaci.metod2Iznos
-    );
-
-  const planId = rezultat.lastInsertRowid;
-
-  const insertDeo = db.prepare(
-    'INSERT INTO deo_iz_plana (plan_secenja_id, part_name, part_size, kolicina_plan) VALUES (?, ?, ?, ?)'
-  );
-  for (const deo of podaci.delovi || []) {
-    insertDeo.run(planId, deo.partName, deo.partSize || null, deo.kolicina);
-  }
-
-  return db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planId);
-}
-
+// Bira metod obračuna za plan sečenja (koji je već povezan sa ovom ponudom) i dodaje stavku
 function izaberiMetodIDodajStavku(planSecenjaId, metod) {
   const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
   if (!plan) throw new Error('Plan sečenja nije pronađen.');
+  if (!plan.ponuda_id) throw new Error('Plan sečenja još nije povezan ni sa jednom ponudom.');
 
   const iznos = metod === 1 ? plan.metod_1_iznos : plan.metod_2_iznos;
   db.prepare('UPDATE plan_secenja SET izabrani_metod = ? WHERE id = ?').run(metod, planSecenjaId);
@@ -94,24 +62,6 @@ function izaberiMetodIDodajStavku(planSecenjaId, metod) {
     iznos,
     jeIzPlanaSecenja: true,
   });
-}
-
-function ponovoIzracunajMetode(planSecenjaId) {
-  const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
-  if (!plan) throw new Error('Plan sečenja nije pronađen.');
-
-  const { izracunajMetode } = require('../services/obracun');
-  const { metod1, metod2 } = izracunajMetode({
-    tezinaDelovaKg: plan.tezina_delova_kg,
-    duzinaRezaMm: plan.duzina_reza_mm,
-    debljinaMm: plan.debljina_mm,
-  });
-
-  db.prepare('UPDATE plan_secenja SET metod_1_iznos = ?, metod_2_iznos = ? WHERE id = ?').run(
-    metod1, metod2, planSecenjaId
-  );
-
-  return db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
 }
 
 function promeniStatus(id, noviStatus, { komentar, dokumentPutanja } = {}) {
@@ -152,7 +102,7 @@ function pretraga({ komitentId, datumOd, datumDo, broj }) {
 }
 
 module.exports = {
-  poId, poPosaoId, stavke, planoviSecenja, delovi,
+  poId, poPosaoId, stavke,
   kreiraj, dodajStavku, obrisiStavku, preracunajUkupno,
-  sacuvajPlanSecenja, izaberiMetodIDodajStavku, ponovoIzracunajMetode, promeniStatus, pretraga,
+  izaberiMetodIDodajStavku, promeniStatus, pretraga,
 };

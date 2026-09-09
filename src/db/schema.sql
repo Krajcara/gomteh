@@ -112,10 +112,12 @@ CREATE TABLE IF NOT EXISTS stavka_ponude (
   redosled INTEGER NOT NULL DEFAULT 0
 );
 
--- Plan sečenja (PDF upload, vezan za ponudu)
+-- Plan sečenja (PDF upload, vezan za posao; ponuda_id je opciono - plan se
+-- uploaduje na nivou posla, pa se BIRA pri kreiranju/izmeni ponude)
 CREATE TABLE IF NOT EXISTS plan_secenja (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ponuda_id INTEGER NOT NULL REFERENCES ponuda(id) ON DELETE CASCADE,
+  posao_id INTEGER NOT NULL REFERENCES posao(id) ON DELETE CASCADE,
+  ponuda_id INTEGER REFERENCES ponuda(id) ON DELETE SET NULL,
   originalni_fajl_putanja TEXT NOT NULL,
   preveden_fajl_putanja TEXT,
   naziv_fajla TEXT,

@@ -20,9 +20,48 @@
 </div>
 
 <div class="card">
+  <h2 style="font-size:16px;">Planovi sečenja</h2>
+  <p style="color:var(--text-muted); font-size:13px; margin-top:-8px;">
+    Uploaduj jedan ili više planova sečenja (PDF) za ovaj posao. Kad budeš pravio ponudu, birаćeš koji od njih da koristiš.
+  </p>
+
+  <form method="post" action="/poslovi/<%= posao.id %>/planovi" enctype="multipart/form-data">
+    <input type="file" name="plan" accept=".pdf" required>
+    <button type="submit">Uploaduj plan</button>
+  </form>
+
+  <table style="margin-top:14px;">
+    <thead><tr><th>Fajl</th><th>Materijal</th><th>Težina (kg)</th><th>Dužina reza (mm)</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% planovi.forEach(p => { %>
+        <tr>
+          <td><%= p.naziv_fajla || '—' %></td>
+          <td><%= p.materijal || '—' %> (<%= p.debljina_mm ?? '—' %>mm)</td>
+          <td><%= p.tezina_delova_kg ?? '—' %></td>
+          <td><%= p.duzina_reza_mm ?? '—' %></td>
+          <td>
+            <% if (p.ponuda_id) { %>
+              povezan sa ponudom <a href="/ponude/<%= p.ponuda_id %>"><%= ponudeMape[p.ponuda_id] || p.ponuda_id %></a>
+            <% } else { %>
+              <span style="color:var(--text-muted);">dostupan (nije povezan)</span>
+            <% } %>
+          </td>
+          <td>
+            <% if (p.preveden_fajl_putanja) { %>
+              <a href="/poslovi/<%= posao.id %>/planovi/<%= p.id %>/preuzmi">Preuzmi prevod</a>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!planovi.length) { %><tr><td colspan="6">Nema uploadovanih planova.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
   <h2 style="font-size:16px;">Ponude</h2>
   <p style="color:var(--text-muted); font-size:13px; margin-top:-8px;">
-    Klikni "Nova ponuda", pa na sledećoj stranici uploaduj plan sečenja (opciono) i dodaj stavke cene.
+    Klikni "Nova ponuda" — na sledećoj stranici bira šta se od uploadovanih planova sečenja koristi i dodaješ stavke cene.
   </p>
   <a class="btn" href="/poslovi/<%= posao.id %>/ponude/nova">+ Nova ponuda</a>
   <table>

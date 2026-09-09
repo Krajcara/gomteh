@@ -8,13 +8,9 @@ const Ponuda = require('../models/ponuda');
 const Posao = require('../models/posao');
 const Komitent = require('../models/komitent');
 const Uplata = require('../models/uplata');
-const { parsirajPlanSecenja } = require('../services/pdfParser');
-const { izracunajMetode } = require('../services/obracun');
-const { generisiPrevedeniPlan, generisiPonudaPdf } = require('../services/pdfGenerator');
+const PlanSecenja = require('../models/planSecenja');
+const { generisiPonudaPdf } = require('../services/pdfGenerator');
 const { zahtevajLogin, MOZE_PONUDE } = require('../middleware/auth');
-
-const UPLOAD_DIR = path.join(__dirname, '../../data/uploads/planovi');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ODBIJANJE_DIR = path.join(__dirname, '../../data/uploads/odbijanja');
 fs.mkdirSync(ODBIJANJE_DIR, { recursive: true });
@@ -24,20 +20,6 @@ const uploadOdbijanje = multer({
     destination: ODBIJANJE_DIR,
     filename: (req, file, cb) => cb(null, `odbijanje-${Date.now()}-${file.originalname}`),
   }),
-  limits: { fileSize: 20 * 1024 * 1024 },
-});
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: UPLOAD_DIR,
-    filename: (req, file, cb) => cb(null, `plan-${Date.now()}.pdf`),
-  }),
-  fileFilter: (req, file, cb) => {
-    if (path.extname(file.originalname).toLowerCase() !== '.pdf') {
-      return cb(new Error('Plan sečenja mora biti PDF fajl.'));
-    }
-    cb(null, true);
-  },
   limits: { fileSize: 20 * 1024 * 1024 },
 });
 
@@ -52,11 +34,12 @@ router.get('/ponude/pretraga', (req, res) => {
   res.render('ponude/pretraga', { rezultati, filter: req.query, komitenti: Komitent.svi() });
 });
 
-// Nova ponuda pod poslom
+// Nova ponuda pod poslom — nudi izbor već uploadovanih (nepovezanih) planova sečenja tog posla
 router.get('/poslovi/:posaoId/ponude/nova', MOZE_PONUDE, (req, res) => {
   const posao = Posao.poId(req.params.posaoId);
   if (!posao) return res.status(404).render('greska', { poruka: 'Posao nije pronađen.' });
-  res.render('ponude/forma', { posao });
+  const dostupniPlanovi = PlanSecenja.dostupniZaPosao(posao.id);
+  res.render('ponude/forma', { posao, dostupniPlanovi });
 });
 
 router.post('/poslovi/:posaoId/ponude', MOZE_PONUDE, (req, res) => {
@@ -73,6 +56,12 @@ router.post('/poslovi/:posaoId/ponude', MOZE_PONUDE, (req, res) => {
     napomena: req.body.napomena,
     rokVazenja: req.body.rokVazenja,
   });
+
+  const izabraniPlanovi = [].concat(req.body.planoviIds || []);
+  if (izabraniPlanovi.length) {
+    PlanSecenja.povezisaPonudom(izabraniPlanovi, ponuda.id);
+  }
+
   res.redirect(`/ponude/${ponuda.id}`);
 });
 
@@ -84,12 +73,15 @@ router.get('/ponude/:id', (req, res) => {
   const posao = Posao.poId(ponuda.posao_id);
   const komitent = Komitent.poId(posao.komitent_id);
   const stavke = Ponuda.stavke(ponuda.id);
-  const planovi = Ponuda.planoviSecenja(ponuda.id);
+  const planovi = PlanSecenja.poPonudi(ponuda.id);
+  const dostupniPlanovi = PlanSecenja.dostupniZaPosao(posao.id);
   const uplate = Uplata.poPonudi(ponuda.id);
   const placeno = Uplata.ukupnoPlaceno(ponuda.id);
   const preostalo = (ponuda.ukupno || 0) - placeno;
 
-  res.render('ponude/detalji', { ponuda, posao, komitent, stavke, planovi, uplate, placeno, preostalo });
+  res.render('ponude/detalji', {
+    ponuda, posao, komitent, stavke, planovi, dostupniPlanovi, uplate, placeno, preostalo,
+  });
 });
 
 // Ručno dodavanje stavke
@@ -103,37 +95,17 @@ router.post('/ponude/:id/stavke/:stavkaId/obrisi', MOZE_PONUDE, (req, res) => {
   res.redirect(`/ponude/${req.params.id}`);
 });
 
-// Upload plana sečenja + automatska ekstrakcija i obračun oba metoda
-router.post('/ponude/:id/plan-secenja', MOZE_PONUDE, upload.single('plan'), async (req, res) => {
-  try {
-    if (!req.file) throw new Error('Fajl plana sečenja nije poslat.');
+// Povezivanje već uploadovanog (na nivou posla) plana sa OVOM ponudom, naknadno
+router.post('/ponude/:id/planovi/poveznica', MOZE_PONUDE, (req, res) => {
+  const izabrani = [].concat(req.body.planId || []);
+  if (izabrani.length) PlanSecenja.povezisaPonudom(izabrani, req.params.id);
+  res.redirect(`/ponude/${req.params.id}`);
+});
 
-    const izvuceno = await parsirajPlanSecenja(req.file.path);
-    const { metod1, metod2 } = izracunajMetode({
-      tezinaDelovaKg: izvuceno.tezinaDelovaKg,
-      duzinaRezaMm: izvuceno.duzinaRezaMm,
-      debljinaMm: izvuceno.debljinaMm,
-    });
-
-    const plan = Ponuda.sacuvajPlanSecenja(req.params.id, {
-      originalnaPutanja: req.file.path,
-      prevedenaPutanja: null,
-      nazivFajla: izvuceno.nazivFajla,
-      materijal: izvuceno.materijal,
-      debljinaMm: izvuceno.debljinaMm,
-      tezinaDelovaKg: izvuceno.tezinaDelovaKg,
-      duzinaRezaMm: izvuceno.duzinaRezaMm,
-      metod1Iznos: metod1,
-      metod2Iznos: metod2,
-      delovi: izvuceno.delovi.map((d) => ({ partName: d.partName, partSize: d.partSize, kolicina: d.kolicina })),
-    });
-
-    await generisiPrevedeniPlan(plan.id);
-
-    res.redirect(`/ponude/${req.params.id}`);
-  } catch (greska) {
-    res.status(400).render('greska', { poruka: `Greška pri obradi plana sečenja: ${greska.message}` });
-  }
+// Otkačinjanje plana sa ponude (vraća ga u "dostupno" na nivou posla)
+router.post('/ponude/:id/planovi/:planId/otkaci', MOZE_PONUDE, (req, res) => {
+  PlanSecenja.otkaciOdPonude(req.params.planId);
+  res.redirect(`/ponude/${req.params.id}`);
 });
 
 // Izbor metoda obračuna za dati plan sečenja -> dodaje stavku
@@ -144,12 +116,12 @@ router.post('/ponude/:id/planovi/:planId/izaberi-metod', MOZE_PONUDE, (req, res)
 
 // Ponovni obračun (npr. ako je cena po debljini dodata NAKON uploada plana)
 router.post('/ponude/:id/planovi/:planId/ponovo-izracunaj', MOZE_PONUDE, (req, res) => {
-  Ponuda.ponovoIzracunajMetode(req.params.planId);
+  PlanSecenja.ponovoIzracunajMetode(req.params.planId);
   res.redirect(`/ponude/${req.params.id}`);
 });
 
 router.get('/ponude/:id/planovi/:planId/preuzmi', (req, res) => {
-  const plan = require('../db/db').prepare('SELECT preveden_fajl_putanja FROM plan_secenja WHERE id = ?').get(req.params.planId);
+  const plan = PlanSecenja.poId(req.params.planId);
   if (!plan || !plan.preveden_fajl_putanja) return res.status(404).render('greska', { poruka: 'Prevedeni plan nije pronađen.' });
   res.download(plan.preveden_fajl_putanja, 'plan-secenja-prevod.pdf');
 });
