@@ -1,5 +1,5 @@
 <%- include('../partials/auth-header') %>
-<h1>Prijava</h1>
+<h1>Prijava — Portal za komitente</h1>
 <% if (greska) { %><p class="greska"><%= greska %></p><% } %>
 <form class="card" method="post" action="/portal/prijava" style="max-width:360px;">
   <label>Email</label>
@@ -8,4 +8,7 @@
   <input type="password" name="lozinka" required>
   <button type="submit">Prijavi se</button>
 </form>
+<p style="text-align:center; margin-top:16px; color:var(--text-muted); font-size:13px;">
+  Zaposleni u GOMTEH-u, prijavite se <a href="/prijava">ovde</a>.
+</p>
 <%- include('../partials/auth-footer') %>

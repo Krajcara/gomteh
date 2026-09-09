@@ -11,7 +11,7 @@ const svi = () => db.prepare('SELECT * FROM komitent ORDER BY naziv').all();
 const poId = (id) => db.prepare('SELECT * FROM komitent WHERE id = ?').get(id);
 
 const poEmailu = (email) =>
-  db.prepare('SELECT * FROM komitent WHERE email = ?').get(email);
+  db.prepare('SELECT * FROM komitent WHERE LOWER(email) = LOWER(?)').get(email);
 
 const pretraga = (tekst) =>
   db

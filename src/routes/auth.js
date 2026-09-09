@@ -13,7 +13,7 @@ router.get('/prijava', (req, res) => {
 
 router.post('/prijava', (req, res) => {
   const { email, lozinka } = req.body;
-  const korisnik = db.prepare('SELECT * FROM korisnik WHERE email = ? AND aktivan = 1').get(email);
+  const korisnik = db.prepare('SELECT * FROM korisnik WHERE LOWER(email) = LOWER(?) AND aktivan = 1').get(email);
 
   if (!korisnik || !bcrypt.compareSync(lozinka, korisnik.lozinka_hash)) {
     return res.status(401).render('auth/prijava', { greska: 'Pogrešan email ili lozinka.' });
