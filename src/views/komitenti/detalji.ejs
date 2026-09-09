@@ -27,6 +27,24 @@
 <div class="card">
   <h2 style="font-size:16px;">Poslovi</h2>
   <a class="btn" href="/komitenti/<%= komitent.id %>/poslovi/novi">+ Novi posao</a>
+
+  <table style="margin-top:14px;">
+    <thead><tr><th>Naziv</th><th>Status</th><th>Kreiran</th></tr></thead>
+    <tbody>
+      <% poslovi.forEach(p => { %>
+        <tr onclick="location.href='/poslovi/<%= p.id %>'">
+          <td><%= p.naziv %></td>
+          <td>
+            <span class="badge badge-<%= p.status %>">
+              <%= { poslata_ponuda: 'Poslata ponuda', u_izradi: 'U izradi', zavrsen: 'Završen', odbijen: 'Odbijen' }[p.status] %>
+            </span>
+          </td>
+          <td><%= new Date(p.kreiran_at).toLocaleDateString('sr-RS') %></td>
+        </tr>
+      <% }) %>
+      <% if (!poslovi.length) { %><tr><td colspan="3">Nema poslova.</td></tr><% } %>
+    </tbody>
+  </table>
 </div>
 
 <%- include('../partials/footer') %>

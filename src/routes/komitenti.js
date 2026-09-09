@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Komitent = require('../models/komitent');
+const Posao = require('../models/posao');
 const { zahtevajLogin, MOZE_MENJATI } = require('../middleware/auth');
 
 router.use(zahtevajLogin);
@@ -42,11 +43,12 @@ router.post('/novi', MOZE_MENJATI, (req, res) => {
   res.redirect(`/komitenti/${komitent.id}`);
 });
 
-// Detalji komitenta — pregled poslova, ponuda, naloga (spaja se sa modulom "posao" kad se doda)
+// Detalji komitenta — pregled poslova, ponuda, naloga
 router.get('/:id', (req, res) => {
   const komitent = Komitent.poId(req.params.id);
   if (!komitent) return res.status(404).render('greska', { poruka: 'Komitent nije pronađen.' });
-  res.render('komitenti/detalji', { komitent });
+  const poslovi = Posao.poKomitentu(komitent.id);
+  res.render('komitenti/detalji', { komitent, poslovi });
 });
 
 router.get('/:id/izmeni', MOZE_MENJATI, (req, res) => {
