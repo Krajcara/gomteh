@@ -48,6 +48,27 @@ app.use('/', require('./routes/poslovi'));
 app.use('/', require('./routes/ponude'));
 app.use('/', require('./routes/radniNalozi'));
 
+// 404 — nijedna ruta iznad nije uhvatila zahtev
+app.use((req, res) => {
+  res.status(404).render('greska', { poruka: `Stranica nije pronađena: ${req.originalUrl}` });
+});
+
+// Opšta obrada grešaka — hvata sve neuhvaćene greške iz ruta iznad.
+// Puna greška (poruka + stack) ide u server log (vidljivo preko journalctl),
+// a korisnik dobija čitljivu stranicu umesto gole "Internal Server Error" poruke.
+app.use((err, req, res, next) => {
+  console.error('=== NEUHVAĆENA GREŠKA ===');
+  console.error(`Ruta: ${req.method} ${req.originalUrl}`);
+  console.error(err.stack || err.message || err);
+  console.error('========================');
+
+  if (res.headersSent) return next(err);
+
+  res.status(500).render('greska', {
+    poruka: 'Došlo je do neočekivane greške. Detalji su zabeleženi u serverskom logu (sudo journalctl -u gomteh -n 50).',
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`GOMTEH pokrenut na http://localhost:${PORT}`);

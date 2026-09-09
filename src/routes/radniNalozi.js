@@ -34,6 +34,8 @@ router.get('/poslovi/:posaoId/radni-nalozi/novi', MOZE_NALOGE, (req, res) => {
 
 router.post('/poslovi/:posaoId/radni-nalozi', MOZE_NALOGE, (req, res) => {
   const posao = Posao.poId(req.params.posaoId);
+  if (!posao) return res.status(404).render('greska', { poruka: 'Posao nije pronađen.' });
+
   const deoIzPlanaIds = [].concat(req.body.deoIzPlanaId || []);
   const kolicine = [].concat(req.body.kolicina || []);
 
@@ -45,6 +47,8 @@ router.post('/poslovi/:posaoId/radni-nalozi', MOZE_NALOGE, (req, res) => {
     if (!kolicina || kolicina <= 0) return; // preskoči prazna polja
 
     const deo = db.prepare('SELECT * FROM deo_iz_plana WHERE id = ?').get(deoId);
+    if (!deo) return; // nepostojeći/nevažeći id — preskoči umesto da padne
+
     const provera = RadniNalog.proveriKolicinu(deoId, kolicina);
 
     stavkeZaNalog.push({ deoIzPlanaId: deoId, partName: deo.part_name, kolicina });
@@ -62,6 +66,12 @@ router.post('/poslovi/:posaoId/radni-nalozi', MOZE_NALOGE, (req, res) => {
   const prihvacenaPonuda = db
     .prepare("SELECT * FROM ponuda WHERE posao_id = ? AND status = 'prihvacena' ORDER BY kreiran_at DESC LIMIT 1")
     .get(posao.id);
+
+  if (!prihvacenaPonuda) {
+    return res.status(400).render('greska', {
+      poruka: 'Ovaj posao nema nijednu prihvaćenu ponudu — radni nalog ne može da se napravi bez toga.',
+    });
+  }
 
   const nalog = RadniNalog.kreiraj({
     posaoId: posao.id,
