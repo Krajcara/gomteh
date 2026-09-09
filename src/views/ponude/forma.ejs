@@ -1,5 +1,9 @@
 <%- include('../partials/header') %>
 <h1>Nova ponuda — <%= posao.naziv %></h1>
+<p style="color:var(--text-muted); font-size:13px;">
+  Sva polja ispod su opciona i mogu se dopuniti kasnije. Posle čuvanja, na stranici ponude ćeš moći da
+  uploaduješ plan sečenja (ako posao ima sečenje) i dodaš stavke cene.
+</p>
 
 <form class="card" method="post" action="/poslovi/<%= posao.id %>/ponude">
   <label>Primio (mesto)</label>
