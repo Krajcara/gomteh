@@ -7,31 +7,49 @@
 
 <div class="card">
   <h2 style="font-size:16px;">Ponude</h2>
-  <table>
-    <thead><tr><th>Broj</th><th>Naslov</th><th>Status</th><th>Ukupno</th></tr></thead>
-    <tbody>
-      <% ponude.forEach(p => { %>
-        <tr>
-          <td><%= p.broj %></td>
-          <td><%= p.naslov_posla || '' %></td>
-          <td><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></td>
-          <td><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></td>
-        </tr>
-        <% if (p.status === 'prihvacena' && uplatePoPonudi[p.id]) { %>
-          <tr>
-            <td colspan="4" style="padding-top:0; padding-bottom:14px; color:var(--text-muted); font-size:13px;">
-              Plaćeno: <strong style="color:var(--success);"><%= uplatePoPonudi[p.id].placeno.toLocaleString('sr-RS') %> din</strong>
-              &nbsp;·&nbsp;
-              Preostaje: <strong style="color:<%= uplatePoPonudi[p.id].preostalo > 0.01 ? 'var(--warning)' : 'var(--success)' %>;">
-                <%= uplatePoPonudi[p.id].preostalo.toLocaleString('sr-RS') %> din
-              </strong>
-            </td>
-          </tr>
-        <% } %>
-      <% }) %>
-      <% if (!ponude.length) { %><tr><td colspan="4">Nema ponuda.</td></tr><% } %>
-    </tbody>
-  </table>
+  <% ponude.forEach(p => { %>
+    <div style="border-top:1px solid var(--border); margin-top:14px; padding-top:12px;">
+      <p>
+        <strong>Ponuda br. <%= p.broj %></strong>
+        <% if (p.naslov_posla) { %> — <%= p.naslov_posla %><% } %>
+        &nbsp;
+        <span class="badge badge-<%= p.status %>"><%= { poslata: 'Poslata', prihvacena: 'Prihvaćena', odbijena: 'Odbijena' }[p.status] %></span>
+      </p>
+      <p>Ukupno: <strong><%= p.ukupno ? p.ukupno.toLocaleString('sr-RS') + ' din' : '—' %></strong></p>
+
+      <% if (p.status === 'prihvacena' && uplatePoPonudi[p.id]) { %>
+        <p style="color:var(--text-muted); font-size:13px;">
+          Plaćeno: <strong style="color:var(--success);"><%= uplatePoPonudi[p.id].placeno.toLocaleString('sr-RS') %> din</strong>
+          &nbsp;·&nbsp;
+          Preostaje: <strong style="color:<%= uplatePoPonudi[p.id].preostalo > 0.01 ? 'var(--warning)' : 'var(--success)' %>;">
+            <%= uplatePoPonudi[p.id].preostalo.toLocaleString('sr-RS') %> din
+          </strong>
+        </p>
+      <% } %>
+
+      <% if (p.status === 'odbijena' && p.komentar_odbijanja) { %>
+        <p class="greska">Razlog odbijanja: <%= p.komentar_odbijanja %></p>
+      <% } %>
+
+      <a href="/portal/ponude/<%= p.id %>/pdf">Preuzmi PDF ponude</a>
+
+      <% if (p.status === 'poslata') { %>
+        <div style="margin-top:10px;">
+          <form method="post" action="/portal/ponude/<%= p.id %>/prihvati" style="display:inline-block; margin-right:10px;"
+                onsubmit="return confirm('Prihvatiti ponudu br. <%= p.broj %>?');">
+            <button type="submit">Prihvati ponudu</button>
+          </form>
+          <form method="post" action="/portal/ponude/<%= p.id %>/odbij" enctype="multipart/form-data" style="display:inline-block;">
+            <input type="text" name="komentar" placeholder="Razlog odbijanja (opciono)" style="width:200px; display:inline-block;">
+            <input type="file" name="dokument" style="width:160px; display:inline-block;">
+            <button type="submit" style="background:var(--danger);"
+                    onclick="return confirm('Odbiti ponudu br. <%= p.broj %>?');">Odbij ponudu</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  <% }) %>
+  <% if (!ponude.length) { %><p style="color:var(--text-muted);">Nema ponuda.</p><% } %>
 </div>
 
 <div class="card">

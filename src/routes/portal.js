@@ -1,9 +1,35 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const db = require('../db/db');
+const Ponuda = require('../models/ponuda');
+const { generisiPonudaPdf } = require('../services/pdfGenerator');
 const { zahtevajKomitentLogin } = require('../middleware/auth');
 
+const ODBIJANJE_DIR = path.join(__dirname, '../../data/uploads/odbijanja');
+fs.mkdirSync(ODBIJANJE_DIR, { recursive: true });
+
+const uploadOdbijanje = multer({
+  storage: multer.diskStorage({
+    destination: ODBIJANJE_DIR,
+    filename: (req, file, cb) => cb(null, `odbijanje-portal-${Date.now()}-${file.originalname}`),
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
 router.use(zahtevajKomitentLogin);
+
+// Nalazi ponudu i proverava da PRIPADA ovom ulogovanom komitentu — vraća null ako ne pripada
+function ponudaKomitentaIliNull(ponudaId, komitentId) {
+  const red = db.prepare(`
+    SELECT ponuda.* FROM ponuda
+    JOIN posao ON posao.id = ponuda.posao_id
+    WHERE ponuda.id = ? AND posao.komitent_id = ?
+  `).get(ponudaId, komitentId);
+  return red || null;
+}
 
 // Lista poslova ovog komitenta
 router.get('/', (req, res) => {
@@ -71,6 +97,46 @@ router.get('/poslovi/:id', (req, res) => {
   });
 
   res.render('portal/posao-detalji', { posao, ponude, radniNalozi, stavkeNaloga, uplatePoPonudi });
+});
+
+// Preuzimanje PDF-a ponude — samo ako pripada ovom komitentu
+router.get('/ponude/:id/pdf', async (req, res) => {
+  const ponuda = ponudaKomitentaIliNull(req.params.id, req.session.komitent.id);
+  if (!ponuda) return res.status(404).render('greska', { poruka: 'Ponuda nije pronađena.' });
+
+  try {
+    const putanja = await generisiPonudaPdf(req.params.id);
+    res.download(putanja, path.basename(putanja));
+  } catch (greska) {
+    res.status(500).render('greska', { poruka: `Greška pri generisanju PDF-a: ${greska.message}` });
+  }
+});
+
+// Klijent sam prihvata ponudu
+router.post('/ponude/:id/prihvati', (req, res) => {
+  const ponuda = ponudaKomitentaIliNull(req.params.id, req.session.komitent.id);
+  if (!ponuda) return res.status(404).render('greska', { poruka: 'Ponuda nije pronađena.' });
+  if (ponuda.status !== 'poslata') {
+    return res.status(400).render('greska', { poruka: 'Ova ponuda više nije u statusu "poslata" — ne može se prihvatiti.' });
+  }
+
+  Ponuda.promeniStatus(req.params.id, 'prihvacena');
+  res.redirect(`/portal/poslovi/${ponuda.posao_id}`);
+});
+
+// Klijent sam odbija ponudu, uz komentar i opcioni prateći dokument
+router.post('/ponude/:id/odbij', uploadOdbijanje.single('dokument'), (req, res) => {
+  const ponuda = ponudaKomitentaIliNull(req.params.id, req.session.komitent.id);
+  if (!ponuda) return res.status(404).render('greska', { poruka: 'Ponuda nije pronađena.' });
+  if (ponuda.status !== 'poslata') {
+    return res.status(400).render('greska', { poruka: 'Ova ponuda više nije u statusu "poslata" — ne može se odbiti.' });
+  }
+
+  Ponuda.promeniStatus(req.params.id, 'odbijena', {
+    komentar: req.body.komentar,
+    dokumentPutanja: req.file ? req.file.path : null,
+  });
+  res.redirect(`/portal/poslovi/${ponuda.posao_id}`);
 });
 
 module.exports = router;
