@@ -293,7 +293,7 @@ function generisiPonudaPdf(ponudaId) {
     : null;
 
   const izlazPutanja = path.join(OUTPUT_DIR, `ponuda-${ponuda.broj.replace('/', '-')}.pdf`);
-  const doc = new PDFDocument({ margin: 40 });
+  const doc = new PDFDocument({ margin: 40, bufferPages: true });
   const stream = fs.createWriteStream(izlazPutanja);
   doc.pipe(stream);
   registrujFontove(doc);
@@ -313,9 +313,15 @@ function generisiPonudaPdf(ponudaId) {
   }
 
   doc.moveDown(2);
-  doc.fontSize(10).text(`Primio: ${ponuda.primio_mesto || ''}`, 40);
-  doc.text(`Sastavio: ${sastavio ? sastavio.ime : ''}`);
-  doc.text(`Datum: ${new Date(ponuda.datum).toLocaleDateString('sr-RS')}`);
+  // Dvokolonski raspored: "Primio" + datum levo, "Sastavio" + ime desno
+  const yPrimio = doc.y;
+  doc.fontSize(10).text(`Primio: ${ponuda.primio_mesto || ''}`, 40, yPrimio, { width: 250 });
+  doc.text(new Date(ponuda.datum).toLocaleDateString('sr-RS'), 40, doc.y, { width: 250 });
+  doc.text('Sastavio:', 300, yPrimio, { width: 200 });
+  doc.text(sastavio ? sastavio.ime : '', 300, yPrimio + doc.currentLineHeight(), { width: 200 });
+
+  doc.y = yPrimio + doc.currentLineHeight() * 2;
+  doc.x = 40;
 
   doc.moveDown();
   doc.font('Bold').fontSize(11).text('PRIMALAC:');
@@ -361,6 +367,15 @@ function generisiPonudaPdf(ponudaId) {
   if (ponuda.garancija) { doc.fontSize(10).text(`Garancija: ${ponuda.garancija}`); }
   if (ponuda.napomena) { doc.moveDown(); doc.fontSize(9).text(`NAPOMENA: ${ponuda.napomena}`); }
   if (ponuda.rok_vazenja) { doc.fontSize(9).text(`Rok važenja ponude je ${ponuda.rok_vazenja}`); }
+
+  // "Strana X od Y" — dodaje se sad na svaku stranu, pošto tek sad znamo ukupan broj strana
+  const brojStrana = doc.bufferedPageRange().count;
+  for (let i = 0; i < brojStrana; i++) {
+    doc.switchToPage(i);
+    doc.fontSize(8).fillColor('#555555')
+      .text(`Strana ${i + 1} od ${brojStrana}`, 450, 30, { width: 115, align: 'right' });
+    doc.fillColor('#000000');
+  }
 
   doc.end();
 
