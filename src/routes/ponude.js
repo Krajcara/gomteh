@@ -86,6 +86,20 @@ router.get('/ponude/:id', (req, res) => {
   });
 });
 
+// Izmena tekstualnih polja ponude (propratni tekst, tehnički opis, rokovi, plaćanje...)
+router.post('/ponude/:id/tekst', MOZE_PONUDE, (req, res) => {
+  Ponuda.azurirajTekstualnaPolja(req.params.id, {
+    propratniTekst: req.body.propratniTekst,
+    tehnickiOpis: req.body.tehnickiOpis,
+    rokIsporuke: req.body.rokIsporuke,
+    placanje: req.body.placanje,
+    garancija: req.body.garancija,
+    napomena: req.body.napomena,
+    rokVazenja: req.body.rokVazenja,
+  });
+  res.redirect(`/ponude/${req.params.id}`);
+});
+
 router.post('/ponude/:id/obrisi', SAMO_ADMIN, (req, res) => {
   const ponuda = Ponuda.poId(req.params.id);
   if (!ponuda) return res.status(404).render('greska', { poruka: 'Ponuda nije pronađena.' });

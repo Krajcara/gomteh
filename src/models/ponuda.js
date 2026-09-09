@@ -48,6 +48,15 @@ function preracunajUkupno(ponudaId) {
   return zbir;
 }
 
+function azurirajTekstualnaPolja(ponudaId, { propratniTekst, tehnickiOpis, rokIsporuke, placanje, garancija, napomena, rokVazenja }) {
+  db.prepare(
+    `UPDATE ponuda SET propratni_tekst = ?, tehnicki_opis = ?, rok_isporuke = ?,
+     placanje = ?, garancija = ?, napomena = ?, rok_vazenja = ? WHERE id = ?`
+  ).run(propratniTekst || null, tehnickiOpis || null, rokIsporuke || null,
+    placanje || null, garancija || null, napomena || null, rokVazenja || null, ponudaId);
+  return poId(ponudaId);
+}
+
 // Bira metod obračuna za plan sečenja (koji je već povezan sa ovom ponudom) i dodaje stavku
 function izaberiMetodIDodajStavku(planSecenjaId, metod) {
   const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
@@ -127,7 +136,7 @@ function obrisi(ponudaId) {
 
 module.exports = {
   poId, poPosaoId, stavke,
-  kreiraj, dodajStavku, obrisiStavku, preracunajUkupno,
+  kreiraj, dodajStavku, obrisiStavku, preracunajUkupno, azurirajTekstualnaPolja,
   izaberiMetodIDodajStavku, promeniStatus, pretraga,
   izracunajUticajBrisanja, obrisi,
 };

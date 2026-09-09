@@ -88,6 +88,34 @@
 </div>
 
 <div class="card">
+  <h2 style="font-size:16px;">Tekstualni podaci ponude</h2>
+  <form method="post" action="/ponude/<%= ponuda.id %>/tekst">
+    <label>Propratni tekst</label>
+    <textarea name="propratniTekst" rows="3"><%= ponuda.propratni_tekst || '' %></textarea>
+
+    <label>Tehnički opis</label>
+    <textarea name="tehnickiOpis" rows="3"><%= ponuda.tehnicki_opis || '' %></textarea>
+
+    <label>Rok isporuke</label>
+    <input type="text" name="rokIsporuke" value="<%= ponuda.rok_isporuke || '' %>" placeholder="npr. 30 dana od dana uvođenja u posao">
+
+    <label>Plaćanje</label>
+    <input type="text" name="placanje" value="<%= ponuda.placanje || '' %>" placeholder="npr. 60% avans ili po dogovoru">
+
+    <label>Garancija</label>
+    <input type="text" name="garancija" value="<%= ponuda.garancija || '' %>" placeholder="npr. 2 godine na izvedene radove">
+
+    <label>Napomena</label>
+    <input type="text" name="napomena" value="<%= ponuda.napomena || '' %>" placeholder="npr. Cene su bez PDV-a 20%">
+
+    <label>Rok važenja ponude</label>
+    <input type="text" name="rokVazenja" value="<%= ponuda.rok_vazenja || '' %>" placeholder="npr. 20 dana">
+
+    <button type="submit">Sačuvaj izmene</button>
+  </form>
+</div>
+
+<div class="card">
   <h2 style="font-size:16px;">Stavke cene</h2>
   <table>
     <thead><tr><th>Opis</th><th>Iznos</th><th></th></tr></thead>
