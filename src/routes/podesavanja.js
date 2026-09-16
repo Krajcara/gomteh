@@ -34,8 +34,9 @@ router.use(SAMO_ADMIN); // podešavanja menja samo administrator
 router.get('/', (req, res) => {
   const firma = Firma.preuzmi();
   const podesavanja = db.prepare('SELECT * FROM podesavanja WHERE id = 1').get();
-  const cenePoDebljini = db.prepare('SELECT * FROM cena_po_debljini ORDER BY debljina_mm').all();
-  res.render('podesavanja/index', { firma, podesavanja, cenePoDebljini });
+  const cenePlazma = db.prepare("SELECT * FROM cena_po_debljini WHERE kategorija = 'plazma' ORDER BY debljina_mm").all();
+  const ceneGas = db.prepare("SELECT * FROM cena_po_debljini WHERE kategorija = 'gas' ORDER BY debljina_mm").all();
+  res.render('podesavanja/index', { firma, podesavanja, cenePlazma, ceneGas });
 });
 
 // Podaci firme (bez logoa)
@@ -78,13 +79,14 @@ router.post('/obracun', (req, res) => {
   res.redirect('/podesavanja#obracun');
 });
 
-// Cena po dužnom metru, po debljini — dodavanje/izmena reda
+// Cena po dužnom metru, po debljini i kategoriji (plazma/gas) — dodavanje/izmena reda
 router.post('/cena-po-debljini', (req, res) => {
-  const { debljinaMm, cenaPoM } = req.body;
+  const { debljinaMm, cenaPoM, kategorija } = req.body;
+  const kat = kategorija === 'gas' ? 'gas' : 'plazma';
   db.prepare(
-    `INSERT INTO cena_po_debljini (debljina_mm, cena_po_m) VALUES (?, ?)
-     ON CONFLICT(debljina_mm) DO UPDATE SET cena_po_m = excluded.cena_po_m`
-  ).run(brojIzForme(debljinaMm), brojIzForme(cenaPoM));
+    `INSERT INTO cena_po_debljini (kategorija, debljina_mm, cena_po_m) VALUES (?, ?, ?)
+     ON CONFLICT(debljina_mm, kategorija) DO UPDATE SET cena_po_m = excluded.cena_po_m`
+  ).run(kat, brojIzForme(debljinaMm), brojIzForme(cenaPoM));
   res.redirect('/podesavanja#cene');
 });
 

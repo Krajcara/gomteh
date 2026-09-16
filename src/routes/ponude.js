@@ -10,6 +10,7 @@ const Komitent = require('../models/komitent');
 const Uplata = require('../models/uplata');
 const PlanSecenja = require('../models/planSecenja');
 const { generisiPonudaPdf } = require('../services/pdfGenerator');
+const { izracunajMetod2ZaKategoriju } = require('../services/obracun');
 const { brojIzForme } = require('../utils');
 const { zahtevajLogin, MOZE_PONUDE, SAMO_ADMIN } = require('../middleware/auth');
 
@@ -134,7 +135,35 @@ router.post('/ponude/:id/planovi/:planId/otkaci', MOZE_PONUDE, (req, res) => {
 
 // Izbor metoda obračuna za dati plan sečenja -> dodaje stavku
 router.post('/ponude/:id/planovi/:planId/izaberi-metod', MOZE_PONUDE, (req, res) => {
-  Ponuda.izaberiMetodIDodajStavku(req.params.planId, parseInt(req.body.metod, 10));
+  Ponuda.izaberiMetodIDodajStavku(req.params.planId, parseInt(req.body.metod, 10), req.body.kategorija || null);
+  res.redirect(`/ponude/${req.params.id}`);
+});
+
+// Ručni kalkulator: sečenje BEZ uploadovanog AJAN plana — uneseš debljinu, dužinu
+// reza i kategoriju (plazma/gas), sistem izračuna cenu i dodaje kao stavku.
+router.post('/ponude/:id/rucni-obracun', MOZE_PONUDE, (req, res) => {
+  const debljinaMm = brojIzForme(req.body.debljinaMm);
+  const duzinaM = brojIzForme(req.body.duzinaM);
+  const kategorija = req.body.kategorija === 'gas' ? 'gas' : 'plazma';
+
+  if (!debljinaMm || !duzinaM) {
+    return res.status(400).render('greska', { poruka: 'Debljina i dužina reza su obavezni.' });
+  }
+
+  const iznos = izracunajMetod2ZaKategoriju(debljinaMm, duzinaM * 1000, kategorija);
+
+  if (iznos === null) {
+    return res.status(400).render('greska', {
+      poruka: `Nema definisane cene za debljinu ${debljinaMm}mm u kategoriji "${kategorija === 'gas' ? 'gas' : 'plazma'}". Dodaj je u Podešavanjima.`,
+    });
+  }
+
+  Ponuda.dodajStavku(req.params.id, {
+    opis: `Sečenje (${kategorija === 'gas' ? 'gas' : 'plazma'}) — debljina ${debljinaMm}mm, dužina reza ${duzinaM}m`,
+    iznos,
+    jeIzPlanaSecenja: true,
+  });
+
   res.redirect(`/ponude/${req.params.id}`);
 });
 

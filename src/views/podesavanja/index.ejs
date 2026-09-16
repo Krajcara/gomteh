@@ -53,11 +53,11 @@
 </div>
 
 <div class="card" id="cene">
-  <h2 style="font-size:16px;">Cena po dužnom metru, po debljini materijala</h2>
+  <h2 style="font-size:16px;">Cena po dužnom metru — Plazma sečenje</h2>
   <table>
     <thead><tr><th>Debljina (mm)</th><th>Cena po m (RSD)</th><th></th></tr></thead>
     <tbody>
-      <% cenePoDebljini.forEach(c => { %>
+      <% cenePlazma.forEach(c => { %>
         <tr>
           <td><%= c.debljina_mm %></td>
           <td><%= c.cena_po_m %></td>
@@ -68,14 +68,46 @@
           </td>
         </tr>
       <% }) %>
+      <% if (!cenePlazma.length) { %><tr><td colspan="3">Nema unetih debljina.</td></tr><% } %>
     </tbody>
   </table>
 
   <form method="post" action="/podesavanja/cena-po-debljini" style="margin-top:16px;">
+    <input type="hidden" name="kategorija" value="plazma">
     <label>Debljina (mm)</label>
     <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 1,5" name="debljinaMm" required>
     <label>Cena po m (RSD)</label>
     <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 250" name="cenaPoM" required>
+    <button type="submit">Dodaj / ažuriraj</button>
+  </form>
+</div>
+
+<div class="card" id="cene-gas">
+  <h2 style="font-size:16px;">Cena po dužnom metru — Gasno sečenje</h2>
+  <table>
+    <thead><tr><th>Debljina (mm)</th><th>Cena po m (RSD)</th><th></th></tr></thead>
+    <tbody>
+      <% ceneGas.forEach(c => { %>
+        <tr>
+          <td><%= c.debljina_mm %></td>
+          <td><%= c.cena_po_m %></td>
+          <td>
+            <form method="post" action="/podesavanja/cena-po-debljini/<%= c.id %>/obrisi" style="margin:0;">
+              <button type="submit" style="background:#a32d2d;margin:0;">Obriši</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!ceneGas.length) { %><tr><td colspan="3">Nema unetih debljina.</td></tr><% } %>
+    </tbody>
+  </table>
+
+  <form method="post" action="/podesavanja/cena-po-debljini" style="margin-top:16px;">
+    <input type="hidden" name="kategorija" value="gas">
+    <label>Debljina (mm)</label>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 10" name="debljinaMm" required>
+    <label>Cena po m (RSD)</label>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 350" name="cenaPoM" required>
     <button type="submit">Dodaj / ažuriraj</button>
   </form>
 </div>

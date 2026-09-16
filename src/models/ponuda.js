@@ -58,16 +58,27 @@ function azurirajTekstualnaPolja(ponudaId, { propratniTekst, tehnickiOpis, rokIs
 }
 
 // Bira metod obračuna za plan sečenja (koji je već povezan sa ovom ponudom) i dodaje stavku
-function izaberiMetodIDodajStavku(planSecenjaId, metod) {
+function izaberiMetodIDodajStavku(planSecenjaId, metod, kategorija) {
   const plan = db.prepare('SELECT * FROM plan_secenja WHERE id = ?').get(planSecenjaId);
   if (!plan) throw new Error('Plan sečenja nije pronađen.');
   if (!plan.ponuda_id) throw new Error('Plan sečenja još nije povezan ni sa jednom ponudom.');
 
-  const iznos = metod === 1 ? plan.metod_1_iznos : plan.metod_2_iznos;
-  db.prepare('UPDATE plan_secenja SET izabrani_metod = ? WHERE id = ?').run(metod, planSecenjaId);
+  let iznos;
+  let opisMetoda;
+
+  if (metod === 1) {
+    iznos = plan.metod_1_iznos;
+    opisMetoda = 'obračun po težini';
+  } else {
+    iznos = kategorija === 'gas' ? plan.metod_2_gas_iznos : plan.metod_2_plazma_iznos;
+    opisMetoda = `obračun po dužini reza — ${kategorija === 'gas' ? 'gas sečenje' : 'plazma sečenje'}`;
+  }
+
+  db.prepare('UPDATE plan_secenja SET izabrani_metod = ?, izabrana_kategorija = ? WHERE id = ?')
+    .run(metod, metod === 2 ? kategorija : null, planSecenjaId);
 
   dodajStavku(plan.ponuda_id, {
-    opis: `Materijal — ${plan.naziv_fajla || 'plan sečenja'} (${metod === 1 ? 'obračun po težini' : 'obračun po dužini reza'})`,
+    opis: `Materijal — ${plan.naziv_fajla || 'plan sečenja'} (${opisMetoda})`,
     iznos,
     jeIzPlanaSecenja: true,
   });

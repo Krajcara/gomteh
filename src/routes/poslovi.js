@@ -98,7 +98,7 @@ router.post('/poslovi/:id/planovi', MOZE_PONUDE, upload.single('plan'), async (r
     if (!req.file) throw new Error('Fajl plana sečenja nije poslat.');
 
     const izvuceno = await parsirajPlanSecenja(req.file.path);
-    const { metod1, metod2 } = izracunajMetode({
+    const { metod1, metod2Plazma, metod2Gas } = izracunajMetode({
       tezinaDelovaKg: izvuceno.tezinaDelovaKg,
       duzinaRezaMm: izvuceno.duzinaRezaMm,
       debljinaMm: izvuceno.debljinaMm,
@@ -113,7 +113,8 @@ router.post('/poslovi/:id/planovi', MOZE_PONUDE, upload.single('plan'), async (r
       tezinaDelovaKg: izvuceno.tezinaDelovaKg,
       duzinaRezaMm: izvuceno.duzinaRezaMm,
       metod1Iznos: metod1,
-      metod2Iznos: metod2,
+      metod2PlazmaIznos: metod2Plazma,
+      metod2GasIznos: metod2Gas,
       delovi: izvuceno.delovi.map((d) => ({ partName: d.partName, partSize: d.partSize, kolicina: d.kolicina })),
     });
 

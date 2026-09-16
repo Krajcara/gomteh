@@ -28,13 +28,13 @@ function sacuvaj(posaoId, podaci) {
     .prepare(
       `INSERT INTO plan_secenja
         (posao_id, originalni_fajl_putanja, preveden_fajl_putanja, naziv_fajla, materijal,
-         debljina_mm, tezina_delova_kg, duzina_reza_mm, metod_1_iznos, metod_2_iznos)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         debljina_mm, tezina_delova_kg, duzina_reza_mm, metod_1_iznos, metod_2_plazma_iznos, metod_2_gas_iznos)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       posaoId, podaci.originalnaPutanja, podaci.prevedenaPutanja, podaci.nazivFajla,
       podaci.materijal, podaci.debljinaMm, podaci.tezinaDelovaKg, podaci.duzinaRezaMm,
-      podaci.metod1Iznos, podaci.metod2Iznos
+      podaci.metod1Iznos, podaci.metod2PlazmaIznos, podaci.metod2GasIznos
     );
 
   const planId = rezultat.lastInsertRowid;
@@ -67,15 +67,15 @@ function ponovoIzracunajMetode(planSecenjaId) {
   if (!plan) throw new Error('Plan sečenja nije pronađen.');
 
   const { izracunajMetode } = require('../services/obracun');
-  const { metod1, metod2 } = izracunajMetode({
+  const { metod1, metod2Plazma, metod2Gas } = izracunajMetode({
     tezinaDelovaKg: plan.tezina_delova_kg,
     duzinaRezaMm: plan.duzina_reza_mm,
     debljinaMm: plan.debljina_mm,
   });
 
-  db.prepare('UPDATE plan_secenja SET metod_1_iznos = ?, metod_2_iznos = ? WHERE id = ?').run(
-    metod1, metod2, planSecenjaId
-  );
+  db.prepare(
+    'UPDATE plan_secenja SET metod_1_iznos = ?, metod_2_plazma_iznos = ?, metod_2_gas_iznos = ? WHERE id = ?'
+  ).run(metod1, metod2Plazma, metod2Gas, planSecenjaId);
 
   return poId(planSecenjaId);
 }

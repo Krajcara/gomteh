@@ -25,11 +25,14 @@ CREATE TABLE IF NOT EXISTS podesavanja (
   procenat_rada REAL NOT NULL DEFAULT 22.5 CHECK (procenat_rada BETWEEN 20 AND 25)
 );
 
--- Cena po dužnom metru, po debljini materijala
+-- Cena po dužnom metru, po debljini materijala i KATEGORIJI sečenja (plazma / gas) —
+-- ista debljina može imati različitu cenu za plazma i za gas sečenje.
 CREATE TABLE IF NOT EXISTS cena_po_debljini (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  debljina_mm REAL NOT NULL UNIQUE,
-  cena_po_m REAL NOT NULL
+  kategorija TEXT NOT NULL DEFAULT 'plazma' CHECK (kategorija IN ('plazma', 'gas')),
+  debljina_mm REAL NOT NULL,
+  cena_po_m REAL NOT NULL,
+  UNIQUE (debljina_mm, kategorija)
 );
 
 -- Interni korisnici (staff)
@@ -126,8 +129,11 @@ CREATE TABLE IF NOT EXISTS plan_secenja (
   tezina_delova_kg REAL,
   duzina_reza_mm REAL,
   metod_1_iznos REAL,               -- (težina × cena/kg) + rad
-  metod_2_iznos REAL,               -- dužina × cena/m
+  metod_2_iznos REAL,               -- (STARO polje, zadržano radi kompatibilnosti — više se ne koristi)
+  metod_2_plazma_iznos REAL,        -- dužina × cena/m iz tabele za PLAZMA sečenje
+  metod_2_gas_iznos REAL,           -- dužina × cena/m iz tabele za GAS sečenje
   izabrani_metod INTEGER CHECK (izabrani_metod IN (1, 2)),
+  izabrana_kategorija TEXT CHECK (izabrana_kategorija IN ('plazma', 'gas')),
   kreiran_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

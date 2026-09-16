@@ -50,17 +50,27 @@
       <p>Težina delova: <%= p.tezina_delova_kg %> kg · Dužina reza: <%= p.duzina_reza_mm %> mm</p>
       <p>
         Metod 1 (težina): <strong><%= p.metod_1_iznos ? p.metod_1_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
+      </p>
+      <p>
+        Metod 2 — Plazma: <strong><%= p.metod_2_plazma_iznos ? p.metod_2_plazma_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
         &nbsp;·&nbsp;
-        Metod 2 (dužina reza): <strong><%= p.metod_2_iznos ? p.metod_2_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
+        Metod 2 — Gas: <strong><%= p.metod_2_gas_iznos ? p.metod_2_gas_iznos.toLocaleString('sr-RS') + ' din' : '—' %></strong>
       </p>
       <% if (p.izabrani_metod) { %>
-        <p><em>Izabran metod <%= p.izabrani_metod %> — dodat kao stavka.</em></p>
+        <p><em>Izabran metod <%= p.izabrani_metod %><%= p.izabrana_kategorija ? ' (' + (p.izabrana_kategorija === 'gas' ? 'gas' : 'plazma') + ')' : '' %> — dodat kao stavka.</em></p>
       <% } else { %>
         <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
           <button type="submit" name="metod" value="1">Koristi metod 1</button>
         </form>
         <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
-          <button type="submit" name="metod" value="2" <%= !p.metod_2_iznos ? 'disabled' : '' %>>Koristi metod 2</button>
+          <input type="hidden" name="metod" value="2">
+          <input type="hidden" name="kategorija" value="plazma">
+          <button type="submit" <%= !p.metod_2_plazma_iznos ? 'disabled' : '' %>>Koristi metod 2 — Plazma</button>
+        </form>
+        <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/izaberi-metod" style="display:inline;">
+          <input type="hidden" name="metod" value="2">
+          <input type="hidden" name="kategorija" value="gas">
+          <button type="submit" <%= !p.metod_2_gas_iznos ? 'disabled' : '' %>>Koristi metod 2 — Gas</button>
         </form>
         <form method="post" action="/ponude/<%= ponuda.id %>/planovi/<%= p.id %>/ponovo-izracunaj" style="display:inline;">
           <button type="submit" title="Ako si cenu po debljini dodao/la posle uploada ovog plana" style="background:var(--bg-elevated-2); color:var(--text);">
@@ -90,6 +100,25 @@
       <button type="submit">Poveži izabrane</button>
     </form>
   <% } %>
+</div>
+
+<div class="card">
+  <h2 style="font-size:16px;">Ručni obračun sečenja (bez uploadovanog plana)</h2>
+  <p style="color:var(--text-muted); font-size:13px; margin-top:-8px;">
+    Za poslove gde nemaš AJAN plan (npr. gasno sečenje) — uneseš debljinu i dužinu reza, sistem izračuna cenu iz Podešavanja i dodaje je kao stavku.
+  </p>
+  <form method="post" action="/ponude/<%= ponuda.id %>/rucni-obracun">
+    <label>Kategorija</label>
+    <select name="kategorija">
+      <option value="plazma">Plazma sečenje</option>
+      <option value="gas">Gasno sečenje</option>
+    </select>
+    <label>Debljina (mm)</label>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 15" name="debljinaMm" required>
+    <label>Dužina reza (m)</label>
+    <input type="text" inputmode="decimal" pattern="[0-9]+([,.][0-9]+)?" placeholder="npr. 12,5" name="duzinaM" required>
+    <button type="submit">Izračunaj i dodaj stavku</button>
+  </form>
 </div>
 
 <div class="card">

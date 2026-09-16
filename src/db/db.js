@@ -188,6 +188,82 @@ try {
   console.error(e.stack);
 }
 
+// Dodaje kategoriju (plazma/gas) u cenu po debljini. Ništa u bazi ne referencira ovu
+// tabelu, pa je preimenovanje bezbedno (nema rizika od "zaraze" tuđih FK definicija).
+function migrirajCenuPoDebljini() {
+  const tabela = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='cena_po_debljini'").get();
+  if (!tabela) return; // ne postoji još — schema.sql će je kreirati u novom obliku
+
+  const kolone = db.prepare('PRAGMA table_info(cena_po_debljini)').all();
+  if (kolone.some((k) => k.name === 'kategorija')) return; // već migrirano
+
+  console.log('Migracija baze: dodajem kategoriju (plazma/gas) u cenu po debljini...');
+
+  const transakcija = db.transaction(() => {
+    db.exec('ALTER TABLE cena_po_debljini RENAME TO cena_po_debljini_stara');
+    db.exec(`
+      CREATE TABLE cena_po_debljini (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kategorija TEXT NOT NULL DEFAULT 'plazma' CHECK (kategorija IN ('plazma', 'gas')),
+        debljina_mm REAL NOT NULL,
+        cena_po_m REAL NOT NULL,
+        UNIQUE (debljina_mm, kategorija)
+      )
+    `);
+    // Postojeći redovi su do sada uvek bili za plazma sečenje (jedina kategorija koja je postojala)
+    db.exec(`
+      INSERT INTO cena_po_debljini (id, kategorija, debljina_mm, cena_po_m)
+      SELECT id, 'plazma', debljina_mm, cena_po_m FROM cena_po_debljini_stara
+    `);
+    db.exec('DROP TABLE cena_po_debljini_stara');
+  });
+
+  transakcija(); // nema FK rizika ovde, ali ostavljamo pragma OFF radi doslednosti sa ostalim migracijama
+  console.log('Migracija cena_po_debljini završena — postojeće cene su sačuvane kao "plazma".');
+}
+
+try {
+  db.pragma('foreign_keys = OFF');
+  migrirajCenuPoDebljini();
+} catch (e) {
+  console.error('GREŠKA pri migraciji cena_po_debljini:', e.message);
+} finally {
+  db.pragma('foreign_keys = ON');
+}
+
+// Dodaje kolone za odvojen obračun plazma/gas metoda 2 u plan_secenja. Ovo su proste
+// ADD COLUMN izmene (bez preimenovanja tabele), pa nema nikakvog rizika za FK reference.
+function migrirajKategorijeUPlanSecenja() {
+  const tabela = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='plan_secenja'").get();
+  if (!tabela) return;
+
+  const kolone = db.prepare('PRAGMA table_info(plan_secenja)').all();
+  const imena = kolone.map((k) => k.name);
+
+  if (!imena.includes('metod_2_plazma_iznos')) {
+    console.log('Migracija baze: dodajem metod_2_plazma_iznos u plan_secenja...');
+    db.exec('ALTER TABLE plan_secenja ADD COLUMN metod_2_plazma_iznos REAL');
+    // Postojeći metod_2_iznos je do sada uvek bio plazma cena — prebaci ga
+    db.exec('UPDATE plan_secenja SET metod_2_plazma_iznos = metod_2_iznos WHERE metod_2_iznos IS NOT NULL');
+  }
+  if (!imena.includes('metod_2_gas_iznos')) {
+    console.log('Migracija baze: dodajem metod_2_gas_iznos u plan_secenja...');
+    db.exec('ALTER TABLE plan_secenja ADD COLUMN metod_2_gas_iznos REAL');
+  }
+  if (!imena.includes('izabrana_kategorija')) {
+    console.log('Migracija baze: dodajem izabrana_kategorija u plan_secenja...');
+    db.exec("ALTER TABLE plan_secenja ADD COLUMN izabrana_kategorija TEXT CHECK (izabrana_kategorija IN ('plazma', 'gas'))");
+    // Ako je ranije već izabran metod 2, to je uvek bilo plazma (jedina kategorija koja je postojala)
+    db.exec("UPDATE plan_secenja SET izabrana_kategorija = 'plazma' WHERE izabrani_metod = 2");
+  }
+}
+
+try {
+  migrirajKategorijeUPlanSecenja();
+} catch (e) {
+  console.error('GREŠKA pri migraciji kategorija u plan_secenja:', e.message);
+}
+
 // Primeni šemu (idempotentno — CREATE TABLE IF NOT EXISTS)
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
