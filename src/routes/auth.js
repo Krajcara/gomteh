@@ -70,7 +70,6 @@ function oidcGreska(res, status, greska) {
 
 router.get('/auth/oidc/login', async (req, res, next) => {
   if (!oidc.ukljucen()) return res.redirect('/prijava');
-  if (!req.query.code && !req.query.error) return res.redirect('/prijava');
   try {
     const adresa = await oidc.zapocniPrijavu(req);
     // Sesija (sa state/nonce/PKCE) mora biti snimljena pre nego što browser ode na Keycloak.
@@ -83,6 +82,8 @@ router.get('/auth/oidc/login', async (req, res, next) => {
 
 router.get('/auth/oidc/callback', async (req, res, next) => {
   if (!oidc.ukljucen()) return res.redirect('/prijava');
+  // Callback bez parametara (npr. klik na "Back to Application" na Keycloak grešci)
+  if (!req.query.code && !req.query.error) return res.redirect('/prijava');
 
   if (req.query.error) {
     console.error(`OIDC: Keycloak je vratio grešku: ${req.query.error} ${req.query.error_description || ''}`);
