@@ -22,6 +22,7 @@ app.use(
 
 // Obaveštenje o dostupnom ažuriranju — vidljivo samo administratorima
 const updateChecker = require('./services/updateChecker');
+const oidc = require('./services/oidc');
 updateChecker.pokreniPeriodicnuProveru();
 
 app.use((req, res, next) => {
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
     rezultat.updateDostupan
   );
   res.locals.korisnik = req.session.korisnik || null;
+  res.locals.oidcUkljucen = oidc.ukljucen();
   next();
 });
 

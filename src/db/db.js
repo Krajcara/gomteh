@@ -268,4 +268,21 @@ try {
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
+// Kolona za vezu sa Keycloak nalogom. Nove instalacije je dobijaju iz schema.sql,
+// a postojeće baze ovde (ALTER TABLE ne može da doda UNIQUE, zato poseban indeks).
+function migrirajOidcSub() {
+  const kolone = db.prepare('PRAGMA table_info(korisnik)').all();
+  if (!kolone.some((k) => k.name === 'oidc_sub')) {
+    console.log('Migracija baze: dodajem oidc_sub u korisnik...');
+    db.exec('ALTER TABLE korisnik ADD COLUMN oidc_sub TEXT');
+  }
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_korisnik_oidc_sub ON korisnik(oidc_sub)');
+}
+
+try {
+  migrirajOidcSub();
+} catch (e) {
+  console.error('GREŠKA pri migraciji oidc_sub u korisnik:', e.message);
+}
+
 module.exports = db;

@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS korisnik (
   uloga TEXT NOT NULL CHECK (uloga IN ('administrator', 'referent_ponude', 'referent_proizvodnja', 'pregled')),
   mora_promeniti_lozinku INTEGER NOT NULL DEFAULT 1,
   aktivan INTEGER NOT NULL DEFAULT 1,
-  kreiran_at TEXT NOT NULL DEFAULT (datetime('now'))
+  kreiran_at TEXT NOT NULL DEFAULT (datetime('now')),
+  oidc_sub TEXT -- Keycloak "sub" (trajni ID korisnika); NULL = samo lokalni nalog
 );
 
 -- Komitenti (klijenti)

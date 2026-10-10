@@ -8,6 +8,11 @@
   <input type="password" name="lozinka" required>
   <button type="submit">Prijavi se</button>
 </form>
+<% if (oidcUkljucen) { %>
+<div style="max-width:360px; margin-top:12px;">
+  <a class="btn" href="/auth/oidc/login" style="display:block; text-align:center;">Prijavi se preko Keycloak-a</a>
+</div>
+<% } %>
 <p style="text-align:center; margin-top:16px; color:var(--text-muted); font-size:13px;">
   Ako si klijent (komitent), prijavi se na <a href="/portal/prijava">portal ovde</a>.
 </p>
