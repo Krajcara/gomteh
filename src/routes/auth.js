@@ -70,6 +70,7 @@ function oidcGreska(res, status, greska) {
 
 router.get('/auth/oidc/login', async (req, res, next) => {
   if (!oidc.ukljucen()) return res.redirect('/prijava');
+  if (!req.query.code && !req.query.error) return res.redirect('/prijava');
   try {
     const adresa = await oidc.zapocniPrijavu(req);
     // Sesija (sa state/nonce/PKCE) mora biti snimljena pre nego što browser ode na Keycloak.
